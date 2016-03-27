@@ -26,8 +26,20 @@ Expandable List View
 
 ![expanditem.gif](./docs/expanditem.gif)
 
-# gradle
+# Install
+
+gradle
 
 ```gradle
     compile 'com.github.axet:android-library:1.0.6'
+```
+
+maven
+```xml
+<dependency>
+  <groupId>com.github.axet</groupId>
+  <artifactId>android-library</artifactId>
+  <version>1.0.6</version>
+  <type>aar</type>
+</dependency>
 ```
