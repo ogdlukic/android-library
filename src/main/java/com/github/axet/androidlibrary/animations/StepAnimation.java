@@ -1,5 +1,6 @@
 package com.github.axet.androidlibrary.animations;
 
+import android.os.Build;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -75,10 +76,15 @@ public class StepAnimation extends Animation {
 
     public void startAnimation(View v) {
         init();
-        // do first step to hide view (we animation does it).
-        //
-        // but some old androids API does not start animation on 0dp views.
-        calc(0.001f, new Transformation());
+
+        // do first step. to hide view (if animation does it) on first step, then slide out view.
+        float s = 0;
+        if (Build.VERSION.SDK_INT < 23) {
+            // some old androids API does not start animation on 0dp views (19 api does not, 20-22 not tested).
+            s = 0.001f;
+        }
+        calc(s, new Transformation());
+
         v.startAnimation(this);
     }
 
