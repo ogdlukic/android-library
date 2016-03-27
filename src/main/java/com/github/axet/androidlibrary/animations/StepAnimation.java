@@ -75,9 +75,10 @@ public class StepAnimation extends Animation {
     }
 
     public void startAnimation(View v) {
+        // here view maybe showen for first time to start animation.
         init();
 
-        // do first step. to hide view (if animation does it) on first step, then slide out view.
+        // do first step. to hide view (if animation slide out view) on first calc(), then slide it out.
         float s = 0;
         if (Build.VERSION.SDK_INT < 23) {
             // some old androids API does not start animation on 0dp views (19 api does not, 20-22 not tested).
