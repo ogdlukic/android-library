@@ -1,14 +1,10 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.content.res.TypedArray;
-import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import com.github.axet.androidlibrary.R;
@@ -21,7 +17,7 @@ public class SquareLinearLayout extends LinearLayout {
         this(context, null);
     }
 
-    public SquareLinearLayout(Context context, @Nullable AttributeSet attrs) {
+    public SquareLinearLayout(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 

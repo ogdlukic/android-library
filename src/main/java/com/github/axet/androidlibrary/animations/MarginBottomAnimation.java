@@ -4,37 +4,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Transformation;
 
-/**
- * Animation Tranformation.getMatrix() has no issues. But animation properies does. Here are few
- * issues  about animations properties.
- * <p/>
- * First:
- * <p/>
- * If your animation touches some elements, then hide them (GONE), some properties may not be
- * recalculated because element is hidden.
- * <p/>
- * Here is no solution. You have to restore all properties of evey view which may be affected by
- * running animation to its initial state.
- * <p/>
- * If you dont you may see routated (setRotate) or hidded (setAlpha) elements even if endAnimation()
- * restore thier initial states (do setRotate(0) or setApha(1) do not make them not rotated or
- * visible).
- * <p/>
- * Second:
- * <p/>
- * On normal run we have onAnimationEnd() is not final call applyTransformation() called after that.
- * <p/>
- * applyTransformation()
- * onAnimationEnd()
- * applyTransformation()
- * <p/>
- * On animation cancel we have:
- * applyTransformation()
- * onAnimationEnd()
- * <p/>
- * Which makes unpredictable where do we have to finish animation with initial values on top of first
- * statement.
- */
 public class MarginBottomAnimation extends StepAnimation {
 
     ViewGroup.MarginLayoutParams viewLp;
