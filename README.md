@@ -28,13 +28,14 @@ Expandable List View
 
 # Install
 
-gradle
+## gradle
 
 ```gradle
     compile 'com.github.axet:android-library:1.0.6'
 ```
 
-maven
+## maven
+
 ```xml
 <dependency>
   <groupId>com.github.axet</groupId>
