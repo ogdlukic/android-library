@@ -78,7 +78,7 @@ public class StepAnimation extends Animation {
         // do first step to hide view (we animation does it).
         //
         // but some old androids API does not start animation on 0dp views.
-        calc(0.01f, new Transformation());
+        calc(0.001f, new Transformation());
         v.startAnimation(this);
     }
 
