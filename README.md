@@ -6,6 +6,8 @@ Android Widgets and Support Class Library
 
 * [OpenFileDialog.java](./src/main/java/com/github/axet/androidlibrary/widgets/OpenFileDialog.java)
 
+[openfiledialog.png](./docs/openfiledialog.png)
+
 # gradle
 
 ```gradle
