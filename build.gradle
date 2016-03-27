@@ -48,7 +48,7 @@ signing {
 
 group = "com.github.axet"
 archivesBaseName = "android-library"
-version = android.defaultConfig.versionName "1.0.2"
+version = android.defaultConfig.versionName
 
 uploadArchives {
     repositories {
