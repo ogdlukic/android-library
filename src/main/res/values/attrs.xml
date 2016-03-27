@@ -2,6 +2,6 @@
 <resources>
     <declare-styleable name="SquareLinearLayout">
         <attr name="maxChild" format="dimension" />
-    </declare-styleable>
+   </declare-styleable>
 
 </resources>
