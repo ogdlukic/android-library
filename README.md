@@ -6,7 +6,7 @@ Android Widgets and Support Class Library
 
 * [OpenFileDialog.java](./src/main/java/com/github/axet/androidlibrary/widgets/OpenFileDialog.java)
 
-Android Directory / File Choicer Dialog with options to create / rename / delete file. Can be used as standalone file.
+Android Directory / File Choicer Dialog with options to create / rename / delete file. Can be used as standalone java file.
 
 ![openfiledialog.png](./docs/openfiledialog.png)
 
