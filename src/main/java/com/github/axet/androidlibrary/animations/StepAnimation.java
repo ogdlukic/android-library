@@ -6,7 +6,7 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.Transformation;
 
 public class StepAnimation extends Animation {
-    View view;
+    public View view;
     public boolean expand;
 
     public interface LateCreator {
