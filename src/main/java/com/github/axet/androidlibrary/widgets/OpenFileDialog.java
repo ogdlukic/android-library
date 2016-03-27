@@ -28,6 +28,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.axet.androidlibrary.R;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
@@ -301,6 +303,9 @@ public class OpenFileDialog extends AlertDialog.Builder {
         paddingTop = dp2px(14);
         paddingBottom = dp2px(14);
         iconSize = dp2px(30);
+
+        folderIcon = R.drawable.ic_folder;
+        fileIcon = R.drawable.ic_file;
     }
 
     public int dp2px(int dp) {
