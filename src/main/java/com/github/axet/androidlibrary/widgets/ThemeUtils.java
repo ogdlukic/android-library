@@ -8,6 +8,11 @@ import com.github.axet.androidlibrary.R;
 
 public class ThemeUtils {
 
+
+    public static int dp2px(Context context, float dp) {
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, context.getResources().getDisplayMetrics());
+    }
+
     public static int getThemeColor(Context context, int id) {
         TypedValue typedValue = new TypedValue();
         TypedArray a = context.obtainStyledAttributes(typedValue.data, new int[]{id});

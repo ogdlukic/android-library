@@ -1,3 +1,16 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.5.0'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
 apply plugin: 'com.android.library'
 apply plugin: 'maven'
 apply plugin: 'signing'
@@ -9,8 +22,8 @@ android {
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 23
-        versionCode 9
-        versionName "1.0.8"
+        versionCode 10
+        versionName "1.0.9"
     }
     buildTypes {
         release {
