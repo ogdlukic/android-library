@@ -10,6 +10,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Environment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.PopupMenu;
 import android.text.TextUtils;
@@ -508,15 +509,8 @@ public class OpenFileDialog extends AlertDialog.Builder {
     }
 
     Drawable getDrawable(int resid) {
-        Drawable d;
-
-        if (Build.VERSION.SDK_INT >= 21)
-            d = getContext().getResources().getDrawable(resid, getContext().getTheme());
-        else
-            d = getContext().getResources().getDrawable(resid);
-
+        Drawable d = ContextCompat.getDrawable(getContext(), resid);
         d.setColorFilter(ThemeUtils.getThemeColor(getContext(), android.R.attr.colorForeground), PorterDuff.Mode.SRC_ATOP);
-
         return d;
     }
 
