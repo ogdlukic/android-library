@@ -90,7 +90,7 @@ public class RoundCheckbox extends CheckBox {
                 new PorterDuffColorFilter(ThemeUtils.getThemeColor(getContext(), R.attr.colorAccent), PorterDuff.Mode.SRC_ATOP));
         background.addState(new int[]{-android.R.attr.state_checked},
                 checkbox_off,
-                new PorterDuffColorFilter(ThemeUtils.getThemeColor(getContext(), android.R.color.holo_blue_light), PorterDuff.Mode.SRC_ATOP));
+                new PorterDuffColorFilter(0x22222222, PorterDuff.Mode.MULTIPLY));
 
         if (Build.VERSION.SDK_INT >= 16)
             setBackground(background);
