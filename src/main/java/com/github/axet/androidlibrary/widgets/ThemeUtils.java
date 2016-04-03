@@ -2,6 +2,8 @@ package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.os.Build;
+import android.support.v4.content.ContextCompat;
 import android.util.TypedValue;
 
 import com.github.axet.androidlibrary.R;
@@ -19,5 +21,13 @@ public class ThemeUtils {
         int color = a.getColor(0, 0);
         a.recycle();
         return color;
+
+//        TypedValue tv = new TypedValue();
+//        boolean found = context.getTheme().resolveAttribute(id, tv, true);
+//        if (found) {
+//            ContextCompat.getColor(context, tv.resourceId);
+//        } else {
+//            return 0;
+//        }
     }
 }

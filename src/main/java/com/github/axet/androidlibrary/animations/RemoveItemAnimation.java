@@ -1,6 +1,7 @@
 package com.github.axet.androidlibrary.animations;
 
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
@@ -41,6 +42,7 @@ public class RemoveItemAnimation extends Animation {
             RemoveItemAnimation m = (RemoveItemAnimation) a;
             m.restore();
         }
+        v.setVisibility(View.VISIBLE);
     }
 
     public RemoveItemAnimation(ListView list, View v, Runnable run) {
@@ -110,13 +112,13 @@ public class RemoveItemAnimation extends Animation {
         }
 
         if (interpolatedTime >= 1) {
+            restore();
             end();
         }
     }
 
     void restore() {
         lp.height = lpOrig.height;
-        convertView.setVisibility(View.VISIBLE);
         convertView.requestLayout();
     }
 
