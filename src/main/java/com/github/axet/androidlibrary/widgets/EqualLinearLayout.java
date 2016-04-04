@@ -125,6 +125,13 @@ public class EqualLinearLayout extends LinearLayout {
             if (i == 0) {
                 // first
                 cl = getPaddingLeft() + lp.leftMargin;
+                if ((lp.gravity & Gravity.LEFT) == Gravity.LEFT) {
+                    ;
+                } else if ((lp.gravity & Gravity.RIGHT) == Gravity.RIGHT) {
+                    cl += cw - childWidth;
+                } else if ((lp.gravity & Gravity.CENTER_HORIZONTAL) == Gravity.CENTER_HORIZONTAL) {
+                    cl += (cw - childWidth) / 2;
+                }
             } else if (i == ilast) {
                 // last
                 cl = getPaddingLeft() + lp.leftMargin;
@@ -178,12 +185,19 @@ public class EqualLinearLayout extends LinearLayout {
             cr = cl + childWidth;
 
             if (i == 0) {
-                // first
                 ct = getPaddingTop() + lp.topMargin;
+                // first
+                if ((lp.gravity & Gravity.TOP) == Gravity.TOP) {
+                    ;
+                } else if ((lp.gravity & Gravity.BOTTOM) == Gravity.BOTTOM) {
+                    ct += ch - childHeight;
+                } else if ((lp.gravity & Gravity.CENTER_VERTICAL) == Gravity.CENTER_VERTICAL) {
+                    ct += (ch - childHeight) / 2;
+                }
             } else if (i == ilast) {
                 // last
                 ct = getPaddingTop() + lp.topMargin;
-                // do left
+
                 if ((lp.gravity & Gravity.TOP) == Gravity.TOP) {
                     ct += ichild * ch;
                 } else if ((lp.gravity & Gravity.BOTTOM) == Gravity.BOTTOM) {
