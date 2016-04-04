@@ -33,7 +33,7 @@ Expandable List View
 ## gradle
 
 ```gradle
-    compile 'com.github.axet:android-library:1.0.6'
+    compile 'com.github.axet:android-library:1.0.12'
 ```
 
 ## maven
