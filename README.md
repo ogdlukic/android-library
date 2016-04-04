@@ -42,7 +42,7 @@ Expandable List View
 <dependency>
   <groupId>com.github.axet</groupId>
   <artifactId>android-library</artifactId>
-  <version>1.0.6</version>
+  <version>1.0.12</version>
   <type>aar</type>
 </dependency>
 ```
