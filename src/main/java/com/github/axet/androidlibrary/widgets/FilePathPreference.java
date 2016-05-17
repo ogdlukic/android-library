@@ -1,46 +1,37 @@
 package com.github.axet.androidlibrary.widgets;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.TypedArray;
-import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
-import android.preference.EditTextPreference;
+import android.support.v7.preference.EditTextPreference;
 import android.util.AttributeSet;
-import android.view.View;
-
-import com.github.axet.androidlibrary.R;
 
 import java.io.File;
 
-public class StoragePathPreference extends EditTextPreference {
+public class FilePathPreference extends EditTextPreference {
     public String def;
     public OpenFileDialog f;
 
-    public StoragePathPreference(Context context, AttributeSet attrs, int defStyleAttr) {
+    public FilePathPreference(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
-    public StoragePathPreference(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
+    public FilePathPreference(Context context, AttributeSet attrs) {
+        super(context, attrs);
     }
 
-    public StoragePathPreference(Context context) {
+    public FilePathPreference(Context context) {
         this(context, null);
-    }
-
-    @Override
-    protected void onBindDialogView(View view) {
-        super.onBindDialogView(view);
     }
 
     public String getDefault() {
         return Environment.getExternalStorageDirectory().getPath();
     }
 
-    @Override
-    protected void showDialog(Bundle state) {
+    public void showDialog(Activity activity) {
         f = new OpenFileDialog(getContext());
 
         String path = getText();
@@ -55,8 +46,6 @@ public class StoragePathPreference extends EditTextPreference {
             public void onClick(DialogInterface dialog, int which) {
                 File ff = f.getCurrentPath();
                 String fileName = ff.getPath();
-                if (!ff.isDirectory())
-                    fileName = ff.getParent();
                 if (callChangeListener(fileName)) {
                     setText(fileName);
                 }
@@ -71,6 +60,11 @@ public class StoragePathPreference extends EditTextPreference {
     @Override
     protected Object onGetDefaultValue(TypedArray a, int index) {
         def = a.getString(index);
+
+        // for file dialog we have (not selected) default value
+        if(def.isEmpty())
+            return "";
+
         return new File(getDefault(), def).getPath();
     }
 

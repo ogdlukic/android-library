@@ -10,6 +10,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.PopupMenu;
@@ -87,6 +88,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         int selectedIndex = -1;
         int colorSelected;
         int colorTransparent;
+        File currentPath;
 
         public FileAdapter(Context context) {
             super(context, android.R.layout.simple_list_item_1);
@@ -132,10 +134,19 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
         public void scan(File dir) {
             selectedIndex = -1;
+            currentPath = dir;
+
+            if (!currentPath.isDirectory()) {
+                currentPath = currentPath.getParentFile();
+            }
+
+            if (currentPath == null) {
+                currentPath = new File("/");
+            }
 
             clear();
 
-            File[] files = dir.listFiles(filenameFilter);
+            File[] files = currentPath.listFiles(filenameFilter);
 
             if (files == null)
                 return;
@@ -145,6 +156,10 @@ public class OpenFileDialog extends AlertDialog.Builder {
             addAll(list);
 
             sort(new SortFiles());
+
+            if (dir.isFile()) {
+                selectedIndex = getPosition(dir);
+            }
 
             notifyDataSetChanged();
         }
@@ -181,7 +196,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         }
 
         public void updateText() {
-            String s = currentPath.getPath();
+            String s = adapter.currentPath.getPath();
 
             List<String> ss = splitPath(s);
             List<String> ssdots = ss;
@@ -352,6 +367,10 @@ public class OpenFileDialog extends AlertDialog.Builder {
                     @Override
                     public void onClick(View view) {
                         File parentDirectory = currentPath.getParentFile();
+
+                        if (parentDirectory == null)
+                            parentDirectory = new File("/");
+
                         if (parentDirectory != null) {
                             currentPath = parentDirectory;
                             RebuildFiles();
@@ -440,8 +459,10 @@ public class OpenFileDialog extends AlertDialog.Builder {
                 @Override
                 public void onItemClick(AdapterView<?> adapterView, View view, int index, long l) {
                     File file = adapter.getItem(index);
+
+                    currentPath = file;
+
                     if (file.isDirectory()) {
-                        currentPath = file;
                         RebuildFiles();
                     } else {
                         if (index != adapter.selectedIndex)
