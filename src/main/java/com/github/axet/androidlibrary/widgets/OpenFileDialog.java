@@ -69,7 +69,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
     static class SortFiles implements Comparator<File> {
         // for symlinks
-        boolean isFile(File f) {
+        public static boolean isFile(File f) {
             return !f.isDirectory();
         }
 
@@ -136,7 +136,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
             selectedIndex = -1;
             currentPath = dir;
 
-            if (!currentPath.isDirectory()) {
+            if (!dir.isDirectory()) {
                 currentPath = currentPath.getParentFile();
             }
 
@@ -157,7 +157,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
             sort(new SortFiles());
 
-            if (dir.isFile()) {
+            if (!dir.isDirectory()) {
                 selectedIndex = getPosition(dir);
             }
 
@@ -465,10 +465,12 @@ public class OpenFileDialog extends AlertDialog.Builder {
                     if (file.isDirectory()) {
                         RebuildFiles();
                     } else {
-                        if (index != adapter.selectedIndex)
+                        if (index != adapter.selectedIndex) {
                             adapter.selectedIndex = index;
-                        else
+                        } else {
                             adapter.selectedIndex = -1;
+                            currentPath = file.getParentFile();
+                        }
                         adapter.notifyDataSetChanged();
                     }
                 }
@@ -490,6 +492,14 @@ public class OpenFileDialog extends AlertDialog.Builder {
         adapter = new FileAdapter(getContext());
         adapter.scan(currentPath);
         listView.setAdapter(adapter);
+
+        // scroll to selected item
+        listView.post(new Runnable() {
+            @Override
+            public void run() {
+                listView.setSelection(adapter.selectedIndex);
+            }
+        });
 
         return super.show();
     }
