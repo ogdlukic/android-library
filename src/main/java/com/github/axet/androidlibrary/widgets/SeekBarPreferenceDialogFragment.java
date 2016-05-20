@@ -16,10 +16,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 public class SeekBarPreferenceDialogFragment extends PreferenceDialogFragment {
-    private static final String SAVE_STATE_VALUES = "SeekBarPreferenceDialogFragment.values";
-    private static final String SAVE_STATE_CHANGED = "SeekBarPreferenceDialogFragment.changed";
-    private static final String SAVE_STATE_ENTRIES = "SeekBarPreferenceDialogFragment.entries";
-    private static final String SAVE_STATE_ENTRY_VALUES = "SeekBarPreferenceDialogFragment.entryValues";
     private boolean mPreferenceChanged;
 
     float value;

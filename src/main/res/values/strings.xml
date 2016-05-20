@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">Android Library</string>
+    <!--OpenFileDialog-->
+    <string name="OpenFileDialogRename">Rename</string>
+    <string name="OpenFileDialogDelete">Delete</string>
+    <string name="OpenFileDialogNewFolder">New Folder</string>
+    <string name="OpenFileDialogFolderName">Folder Name</string>
+    <string name="OpenFileDialogUnableCreate">Unable create folder: \'%1$s\'</string>
+    <string name="OpenFileDialogFolderCreated">Folder \'%1$s\' created</string>
+    <string name="OpenFileDialogFolderDeleted">Deleted: \'%1$s\'</string>
+    <string name="OpenFileDialogRenamedTo">Renamed to: \'%1$s\'</string>
+    <string name="OpenFileDialogEmptyList">Empty List</string>
+    <string name="ShareAction">Share</string>
 </resources>

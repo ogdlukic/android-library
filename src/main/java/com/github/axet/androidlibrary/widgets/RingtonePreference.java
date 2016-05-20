@@ -10,9 +10,6 @@ import android.support.v7.preference.EditTextPreference;
 import android.util.AttributeSet;
 
 public class RingtonePreference extends EditTextPreference {
-    public String def;
-    public OpenFileDialog f;
-
     public RingtonePreference(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
