@@ -99,7 +99,7 @@ public class PopupShareActionProvider extends ListPopupWindow {
     public void setShareIntent(Intent shareIntent) {
         action.setShareIntent(shareIntent);
 
-        MenuItem share = popup.getMenu().add("Share");
+        MenuItem share = popup.getMenu().add(context.getString(R.string.ShareAction));
         MenuItemCompat.setActionProvider(share, action).setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
         MenuItemImpl i = (MenuItemImpl) share;
