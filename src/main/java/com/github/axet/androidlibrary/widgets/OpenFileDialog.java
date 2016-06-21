@@ -2,19 +2,14 @@ package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Environment;
-import android.os.Handler;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.PopupMenu;
-import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -39,16 +34,13 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
-import java.util.regex.Pattern;
 
 public class OpenFileDialog extends AlertDialog.Builder {
-    public static final String MID = "...";
     public static final String UP = "[..]";
     public static final String ROOT = "/";
 
     File currentPath;
-    TextMax textMax;
+    TextView title;
     ListView listView;
     FilenameFilter filenameFilter;
     int folderIcon;
@@ -161,80 +153,6 @@ public class OpenFileDialog extends AlertDialog.Builder {
         }
     }
 
-    public class TextMax extends ViewGroup {
-        TextView text;
-
-        public TextMax(Context context, TextView text) {
-            super(context);
-            this.text = text;
-
-            addView(text);
-        }
-
-        public int getTextWidth(String text, Paint paint) {
-            Rect bounds = new Rect();
-            paint.getTextBounds(text, 0, text.length(), bounds);
-            return bounds.left + bounds.width();
-        }
-
-        public String makePath(List<String> ss) {
-            if (ss.size() == 0)
-                return ROOT;
-            return TextUtils.join(File.separator, ss);
-        }
-
-        public List<String> splitPath(String s) {
-            return new ArrayList<String>(Arrays.asList(s.split(Pattern.quote(File.separator))));
-        }
-
-        int getMaxWidth() {
-            return text.getWidth() - text.getPaddingLeft() - text.getPaddingRight();
-        }
-
-        public void updateText() {
-            String s = adapter.currentPath.getPath();
-
-            List<String> ss = splitPath(s);
-            List<String> ssdots = ss;
-
-            String sdots = makePath(ssdots);
-
-            while (getTextWidth(sdots, text.getPaint()) > getMaxWidth()) {
-                if (ss.size() == 1) {
-                    String sdot = ss.get(0);
-                    sdot = sdot.substring(1, sdot.length());
-                    ss.set(0, sdot);
-                    sdot = MID + sdot;
-                    sdots = sdot;
-                } else {
-                    int mid = (ss.size() - 1) / 2;
-                    ssdots = new ArrayList<>(ss);
-                    ssdots.set(mid, MID);
-                    ss.remove(mid);
-                    sdots = makePath(ssdots);
-                }
-            }
-
-            text.setText(sdots);
-        }
-
-        @Override
-        protected void onLayout(boolean changed, int l, int t, int r, int b) {
-            text.layout(l, t, r, b);
-
-            updateText();
-        }
-
-        @Override
-        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-            int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-            int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-
-            text.measure(MeasureSpec.makeMeasureSpec(widthSize, MeasureSpec.EXACTLY), heightMeasureSpec);
-            setMeasuredDimension(text.getMeasuredWidth(), text.getMeasuredHeight());
-        }
-    }
-
     public static class EditTextDialog extends AlertDialog.Builder {
         EditText input;
 
@@ -332,10 +250,10 @@ public class OpenFileDialog extends AlertDialog.Builder {
 
     @Override
     public AlertDialog show() {
-        TextView title = (TextView) LayoutInflater.from(getContext()).inflate(android.R.layout.simple_list_item_1, null);
+        title = (TextView) LayoutInflater.from(getContext()).inflate(android.R.layout.simple_list_item_1, null);
         title.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         title.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
-        textMax = new TextMax(getContext(), title);
+        PathMax textMax = new PathMax(getContext(), title);
         setCustomTitle(textMax);
 
         // main view, linearlayout
@@ -565,6 +483,6 @@ public class OpenFileDialog extends AlertDialog.Builder {
     private void RebuildFiles() {
         adapter.scan(currentPath);
         listView.setSelection(0);
-        textMax.updateText();
+        title.setText(adapter.currentPath.getPath());
     }
 }
