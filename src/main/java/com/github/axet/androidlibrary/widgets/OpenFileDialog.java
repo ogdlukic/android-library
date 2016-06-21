@@ -414,6 +414,8 @@ public class OpenFileDialog extends AlertDialog.Builder {
         adapter.scan(currentPath);
         listView.setAdapter(adapter);
 
+        title.setText(adapter.currentPath.getPath());
+
         // scroll to selected item
         listView.post(new Runnable() {
             @Override
