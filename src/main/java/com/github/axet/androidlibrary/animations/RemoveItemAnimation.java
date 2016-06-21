@@ -124,6 +124,9 @@ public class RemoveItemAnimation extends Animation {
 
     void end() {
         convertView.setVisibility(View.GONE);
-        handler.post(run);
+        if (run != null) {
+            handler.post(run);
+            run = null;
+        }
     }
 }
