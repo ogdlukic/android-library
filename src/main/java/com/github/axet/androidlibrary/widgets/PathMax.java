@@ -1,21 +1,19 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.ListAdapter;
 import android.widget.TextView;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -102,15 +100,24 @@ public class PathMax extends ViewGroup {
         return text.getWidth() - text.getPaddingLeft() - text.getPaddingRight() - getPaddingLeft() - getPaddingRight();
     }
 
-    public void updateText(int max) {
+    public String formatText(String s, int max) {
+        String scheme = "";
+        try {
+            URI u = new URI(s);
+            if (u.getScheme() != null) {
+                scheme = u.getScheme() + "://";
+                s = s.substring(scheme.length());
+            }
+        } catch (URISyntaxException e) {
+        }
+
         TextView text = (TextView) getChildAt(0);
 
         List<String> ss = splitPath(s);
 
         // when s == "/"
         if (ss.size() == 0) {
-            set(s);
-            return;
+            return scheme + s;
         }
 
         // check if file not actual path, but filename itself
@@ -118,25 +125,45 @@ public class PathMax extends ViewGroup {
 
         List<String> ssdots = ss;
 
-        String sdots = makePath(ssdots);
+        String sdots = scheme + makePath(ssdots);
 
         while (getTextWidth(sdots, text.getPaint()) >= max) {
-            if (ss.size() == 1) {
+            if (ss.size() == 2) {
+                String sdot = ss.get(1);
+
+                // cant go lower remove last element
+                if (sdot.length() <= 2) {
+                    int mid = 1;
+
+                    ssdots = new ArrayList<>(ss);
+                    ssdots.set(mid, MID);
+                    ss.remove(mid);
+                    sdots = scheme + makePath(ssdots);
+                } else {
+                    int mid = sdot.length() / 2;
+                    // cut mid char
+                    sdot = sdot.substring(0, mid) + sdot.substring(mid + 1, sdot.length());
+
+                    ss.set(1, sdot);
+
+                    sdot = sdot.substring(0, mid) + MID + sdot.substring(mid, sdot.length());
+
+                    if (!single) {
+                        if (scheme.isEmpty())
+                            sdot = MID + File.separator + sdot;
+                    }
+
+                    sdots = scheme + ss.get(0) + File.separator + sdot;
+                }
+            } else if (ss.size() == 1) {
                 String sdot = ss.get(0);
 
-                // we reached empty string, very low actual TextView Width.
-                if (sdot.length() == 0) {
-                    set(MID);
-                    return;
-                }
-
-                int mid;
                 // cant go lower return
                 if (sdot.length() <= 2) {
-                    set(MID);
-                    return;
+                    return scheme + MID;
                 }
-                mid = sdot.length() / 2;
+
+                int mid = sdot.length() / 2;
                 // cut mid char
                 sdot = sdot.substring(0, mid) + sdot.substring(mid + 1, sdot.length());
 
@@ -145,20 +172,22 @@ public class PathMax extends ViewGroup {
                 sdot = sdot.substring(0, mid) + MID + sdot.substring(mid, sdot.length());
 
                 if (!single) {
-                    sdot = MID + File.separator + sdot;
+                    if (scheme.isEmpty())
+                        sdot = MID + File.separator + sdot;
                 }
 
-                sdots = sdot;
+                sdots = scheme + sdot;
             } else {
                 int mid = (ss.size() - 1) / 2;
+
                 ssdots = new ArrayList<>(ss);
                 ssdots.set(mid, MID);
                 ss.remove(mid);
-                sdots = makePath(ssdots);
+                sdots = scheme + makePath(ssdots);
             }
         }
 
-        set(sdots);
+        return sdots;
     }
 
     void set(String sdots) {
@@ -173,23 +202,25 @@ public class PathMax extends ViewGroup {
     }
 
     @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        TextView text = (TextView) getChildAt(0);
-
-        text.layout(l, t, r, b);
-    }
-
-    @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         TextView text = (TextView) getChildAt(0);
 
-        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        // int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
 
-        updateText(widthSize - text.getPaddingLeft() - text.getPaddingRight());
+        String d = formatText(s, widthSize - text.getPaddingLeft() - text.getPaddingRight());
+
+        set(d);
 
         text.measure(MeasureSpec.makeMeasureSpec(widthSize, MeasureSpec.EXACTLY), heightMeasureSpec);
 
         setMeasuredDimension(text.getMeasuredWidth(), text.getMeasuredHeight());
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        TextView text = (TextView) getChildAt(0);
+
+        text.layout(0, 0, text.getMeasuredWidth(), text.getMeasuredHeight());
     }
 }
