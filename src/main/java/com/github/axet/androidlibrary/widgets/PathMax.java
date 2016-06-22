@@ -174,6 +174,8 @@ public class PathMax extends ViewGroup {
                 if (!single) {
                     if (scheme.isEmpty())
                         sdot = MID + File.separator + sdot;
+                    else
+                        sdot = sdot + File.separator + MID;
                 }
 
                 sdots = scheme + sdot;
