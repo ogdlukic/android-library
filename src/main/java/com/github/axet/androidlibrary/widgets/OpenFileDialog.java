@@ -254,6 +254,7 @@ public class OpenFileDialog extends AlertDialog.Builder {
         title.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         title.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
         PathMax textMax = new PathMax(getContext(), title);
+        textMax.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         setCustomTitle(textMax);
 
         // main view, linearlayout

@@ -1,8 +1,6 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -78,12 +76,6 @@ public class PathMax extends ViewGroup {
         s = text.getText().toString();
     }
 
-    public int getTextWidth(String text, Paint paint) {
-        Rect bounds = new Rect();
-        paint.getTextBounds(text, 0, text.length(), bounds);
-        return bounds.left + bounds.width();
-    }
-
     public String makePath(List<String> ss) {
         if (ss.size() == 0)
             return ROOT;
@@ -100,7 +92,28 @@ public class PathMax extends ViewGroup {
         return text.getWidth() - text.getPaddingLeft() - text.getPaddingRight() - getPaddingLeft() - getPaddingRight();
     }
 
-    public String formatText(String s, int max) {
+    void set(String s ) {
+        TextView text = (TextView) getChildAt(0);
+        String old = text.getText().toString();
+        if (!old.equals(s)) {
+            ignore = true;
+            text.setText(s);
+            ignore = false;
+        }
+    }
+
+    int measureText(String s) {
+        TextView text = (TextView) getChildAt(0);
+
+        set(s);
+
+        text.measure(0, 0);
+        return text.getMeasuredWidth();
+    }
+
+    public int formatText(int max) {
+        String s = this.s;
+
         String scheme = "";
         try {
             URI u = new URI(s);
@@ -111,13 +124,11 @@ public class PathMax extends ViewGroup {
         } catch (URISyntaxException e) {
         }
 
-        TextView text = (TextView) getChildAt(0);
-
         List<String> ss = splitPath(s);
 
         // when s == "/"
         if (ss.size() == 0) {
-            return scheme + s;
+            return measureText(scheme + s);
         }
 
         // check if file not actual path, but filename itself
@@ -127,7 +138,7 @@ public class PathMax extends ViewGroup {
 
         String sdots = scheme + makePath(ssdots);
 
-        while (getTextWidth(sdots, text.getPaint()) >= max) {
+        while (measureText(sdots) > max) {
             if (ss.size() == 2) {
                 String sdot = ss.get(1);
 
@@ -160,7 +171,7 @@ public class PathMax extends ViewGroup {
 
                 // cant go lower return
                 if (sdot.length() <= 2) {
-                    return scheme + MID;
+                    return measureText(scheme + MID);
                 }
 
                 int mid = sdot.length() / 2;
@@ -189,40 +200,54 @@ public class PathMax extends ViewGroup {
             }
         }
 
-        return sdots;
-    }
-
-    void set(String sdots) {
-        TextView text = (TextView) getChildAt(0);
-
-        String old = text.getText().toString();
-        if (!old.equals(sdots)) {
-            ignore = true;
-            text.setText(sdots);
-            ignore = false;
-        }
+        return measureText(sdots);
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         TextView text = (TextView) getChildAt(0);
 
-        // int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
 
-        String d = formatText(s, widthSize - text.getPaddingLeft() - text.getPaddingRight());
+        int padx = getPaddingLeft() + getPaddingRight();
+        int pady = getPaddingTop() + getPaddingBottom();
 
-        set(d);
+        int textWidth;
+        int pathWidth;
 
-        text.measure(MeasureSpec.makeMeasureSpec(widthSize, MeasureSpec.EXACTLY), heightMeasureSpec);
+        int textHeight;
+        int pathHeight;
 
-        setMeasuredDimension(text.getMeasuredWidth(), text.getMeasuredHeight());
+        textWidth = formatText(widthSize - padx);
+
+        if (widthMode == MeasureSpec.EXACTLY) {
+            pathWidth = widthSize;
+        } else {
+            pathWidth = textWidth + padx;
+        }
+
+        if (heightMode == MeasureSpec.EXACTLY) {
+            textHeight = heightSize - pady;
+            pathHeight = heightSize;
+        } else {
+            text.measure(0, 0);
+            textHeight = text.getMeasuredHeight();
+            pathHeight = textHeight + pady;
+        }
+
+        text.measure(MeasureSpec.makeMeasureSpec(textWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(textHeight, MeasureSpec.EXACTLY));
+
+        setMeasuredDimension(pathWidth, pathHeight);
     }
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         TextView text = (TextView) getChildAt(0);
 
-        text.layout(0, 0, text.getMeasuredWidth(), text.getMeasuredHeight());
+        text.layout(getPaddingLeft(), getPaddingTop(), getPaddingLeft() + text.getMeasuredWidth(), getPaddingTop() + text.getMeasuredHeight());
     }
 }
