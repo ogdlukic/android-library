@@ -76,10 +76,10 @@ public class PathMax extends ViewGroup {
         s = text.getText().toString();
     }
 
-    public String makePath(List<String> ss) {
+    public String makePath(String prefix, List<String> ss, String suffix) {
         if (ss.size() == 0)
             return ROOT;
-        return TextUtils.join(File.separator, ss);
+        return prefix + TextUtils.join(File.separator, ss) + suffix;
     }
 
     public List<String> splitPath(String s) {
@@ -92,7 +92,7 @@ public class PathMax extends ViewGroup {
         return text.getWidth() - text.getPaddingLeft() - text.getPaddingRight() - getPaddingLeft() - getPaddingRight();
     }
 
-    void set(String s ) {
+    void set(String s) {
         TextView text = (TextView) getChildAt(0);
         String old = text.getText().toString();
         if (!old.equals(s)) {
@@ -126,17 +126,18 @@ public class PathMax extends ViewGroup {
 
         List<String> ss = splitPath(s);
 
+        String suffix = s.endsWith(File.separator) ? File.separator : "";
+
         // when s == "/"
         if (ss.size() == 0) {
             return measureText(scheme + s);
         }
 
-        // check if file not actual path, but filename itself
-        boolean single = new File(s).getName().equals(s);
+        boolean removed = false;
 
         List<String> ssdots = ss;
 
-        String sdots = scheme + makePath(ssdots);
+        String sdots = makePath(scheme, ssdots, suffix);
 
         while (measureText(sdots) > max) {
             if (ss.size() == 2) {
@@ -149,7 +150,8 @@ public class PathMax extends ViewGroup {
                     ssdots = new ArrayList<>(ss);
                     ssdots.set(mid, MID);
                     ss.remove(mid);
-                    sdots = scheme + makePath(ssdots);
+                    removed = true;
+                    sdots = makePath(scheme, ssdots, suffix);
                 } else {
                     int mid = sdot.length() / 2;
                     // cut mid char
@@ -159,12 +161,12 @@ public class PathMax extends ViewGroup {
 
                     sdot = sdot.substring(0, mid) + MID + sdot.substring(mid, sdot.length());
 
-                    if (!single) {
+                    if (removed) {
                         if (scheme.isEmpty())
                             sdot = MID + File.separator + sdot;
                     }
 
-                    sdots = scheme + ss.get(0) + File.separator + sdot;
+                    sdots = scheme + ss.get(0) + File.separator + sdot + suffix;
                 }
             } else if (ss.size() == 1) {
                 String sdot = ss.get(0);
@@ -182,21 +184,22 @@ public class PathMax extends ViewGroup {
 
                 sdot = sdot.substring(0, mid) + MID + sdot.substring(mid, sdot.length());
 
-                if (!single) {
+                if (removed) {
                     if (scheme.isEmpty())
                         sdot = MID + File.separator + sdot;
                     else
                         sdot = sdot + File.separator + MID;
                 }
 
-                sdots = scheme + sdot;
+                sdots = scheme + sdot + suffix;
             } else {
                 int mid = (ss.size() - 1) / 2;
 
                 ssdots = new ArrayList<>(ss);
                 ssdots.set(mid, MID);
+                removed = true;
                 ss.remove(mid);
-                sdots = scheme + makePath(ssdots);
+                sdots = makePath(scheme, ssdots, suffix);
             }
         }
 
