@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Android Library</string>
+    <!--OpenFileDialog-->
+    <string name="OpenFileDialogRename">Переименовать</string>
+    <string name="OpenFileDialogDelete">Удалить</string>
+    <string name="OpenFileDialogNewFolder">Новая Папка</string>
+    <string name="OpenFileDialogFolderName">Имя папки</string>
+    <string name="OpenFileDialogUnableCreate">Не получилось создать папку: \'%1$s\'</string>
+    <string name="OpenFileDialogFolderCreated">Папка \'%1$s\' создана</string>
+    <string name="OpenFileDialogFolderDeleted">Удалено: \'%1$s\'</string>
+    <string name="OpenFileDialogRenamedTo">Переименовано: \'%1$s\'</string>
+    <string name="OpenFileDialogEmptyList">Пустой список</string>
+    <string name="ShareAction">Поделиться</string>
+</resources>
