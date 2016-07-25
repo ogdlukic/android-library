@@ -14,6 +14,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -22,6 +23,9 @@ public class PathMax extends ViewGroup {
     public static final String MID = "...";
 
     String s = ROOT;
+
+    // speed up calculations for specified width
+    HashMap<Integer, String> textMap = new HashMap<>();
 
     boolean ignore = false;
 
@@ -72,6 +76,9 @@ public class PathMax extends ViewGroup {
     void save() {
         if (ignore)
             return;
+
+        textMap.clear();
+
         TextView text = (TextView) getChildAt(0);
         s = text.getText().toString();
     }
@@ -225,7 +232,14 @@ public class PathMax extends ViewGroup {
         int textHeight;
         int pathHeight;
 
-        textWidth = formatText(widthSize - padx);
+        int w = widthSize - padx;
+        String s = textMap.get(w);
+        if (s == null) {
+            textWidth = formatText(w);
+            textMap.put(w, text.getText().toString());
+        } else {
+            textWidth = measureText(s);
+        }
 
         if (widthMode == MeasureSpec.EXACTLY) {
             pathWidth = widthSize;
