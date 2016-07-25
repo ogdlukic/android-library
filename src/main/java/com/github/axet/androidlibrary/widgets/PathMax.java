@@ -55,7 +55,8 @@ public class PathMax extends ViewGroup {
 
     void attach(View v) {
         if (v instanceof TextView) {
-            ((TextView) v).addTextChangedListener(new TextWatcher() {
+            TextView t = (TextView) v;
+            t.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 }
@@ -77,10 +78,12 @@ public class PathMax extends ViewGroup {
         if (ignore)
             return;
 
-        textMap.clear();
-
         TextView text = (TextView) getChildAt(0);
-        s = text.getText().toString();
+        String t = text.getText().toString();
+        if (!s.equals(t)) {
+            s = t;
+            textMap.clear();
+        }
     }
 
     public String makePath(String prefix, List<String> ss, String suffix) {
