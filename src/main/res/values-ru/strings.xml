@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">Android Library</string>
     <!--OpenFileDialog-->
     <string name="OpenFileDialogRename">Переименовать</string>
     <string name="OpenFileDialogDelete">Удалить</string>
