@@ -62,7 +62,7 @@ public class FilePathPreference extends EditTextPreference {
         def = a.getString(index);
 
         // for file dialog we have (not selected) default value
-        if(def.isEmpty())
+        if (def.isEmpty())
             return "";
 
         return new File(getDefault(), def).getPath();

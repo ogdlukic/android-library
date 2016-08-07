@@ -51,7 +51,7 @@ public class SquareLinearLayout extends LinearLayout {
 
         int mw = MeasureSpec.getSize(widthMeasureSpec) / count;
 
-        if(maxChild != -1) {
+        if (maxChild != -1) {
             if (mw > maxChild)
                 mw = maxChild;
         }

@@ -1,7 +1,6 @@
 package com.github.axet.androidlibrary.animations;
 
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;

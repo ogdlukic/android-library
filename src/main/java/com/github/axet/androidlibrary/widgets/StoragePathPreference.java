@@ -10,8 +10,6 @@ import android.preference.EditTextPreference;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.github.axet.androidlibrary.R;
-
 import java.io.File;
 
 public class StoragePathPreference extends EditTextPreference {

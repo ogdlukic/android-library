@@ -32,12 +32,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -76,39 +72,6 @@ public class WebViewCustom extends WebView {
             Log.e(TAG, "load timeout " + url);
         else
             Log.e(TAG, url, e);
-    }
-
-    public static class HttpError extends HttpClient.DownloadResponse {
-        static final String UTF8 = "UTF8";
-
-        public HttpError(Throwable e) {
-            super("text/plain", UTF8, getStream(e));
-        }
-
-        public HttpError(String msg) {
-            super("text/plain", UTF8, getStream(msg));
-        }
-
-        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-        public HttpError(String mimeType, String encoding, int statusCode, String reasonPhrase, Map<String, String> responseHeaders, InputStream data) {
-            super(mimeType, encoding, statusCode, reasonPhrase, responseHeaders, data);
-        }
-
-        public static InputStream getStream(Throwable e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            return getStream(sw.toString());
-        }
-
-        public static InputStream getStream(String str) {
-            try {
-                return new ByteArrayInputStream(str.getBytes(UTF8));
-            } catch (IOException ee) {
-                Log.e(TAG, "HttpError", ee);
-                return null;
-            }
-        }
     }
 
     public class Interceptor {
@@ -442,7 +405,6 @@ public class WebViewCustom extends WebView {
             return;
         }
         try {
-            base = url;
             String html = IOUtils.toString(r.getData(), r.getEncoding());
             String hist = url;
             if (r.getError() == null && r.isHtml()) {
@@ -451,6 +413,9 @@ public class WebViewCustom extends WebView {
                 url = "about:error";
                 hist = null;
             }
+
+            base = url;
+
             final String baseUrl = url;
             final String data = html;
             final String history = hist;
@@ -473,16 +438,14 @@ public class WebViewCustom extends WebView {
 
     @Override
     public void loadDataWithBaseURL(String baseUrl, String data, String mimeType, String encoding, String historyUrl) {
-        if (data != null) { // clear url call
-            if (base != baseUrl) { // external call
-                // all inner calles already set url
-                if (http != null) {
-                    // make updateCookies() mecanics work
-                    removeWebCookies();
-                }
-                base = baseUrl;
-                data = loadBase(data);
+        if (base != baseUrl) { // external call
+            // all inner calles already set url
+            if (http != null) {
+                // make updateCookies() mecanics work
+                removeWebCookies();
             }
+            base = baseUrl;
+            data = loadBase(data);
         }
         super.loadDataWithBaseURL(baseUrl, data, mimeType, encoding, historyUrl);
     }
@@ -562,7 +525,7 @@ public class WebViewCustom extends WebView {
                     onReceivedError(WebViewCustom.this, e.getMessage(), url);
                 }
             });
-            return new HttpError(e);
+            return new HttpClient.HttpError(e);
         }
     }
 

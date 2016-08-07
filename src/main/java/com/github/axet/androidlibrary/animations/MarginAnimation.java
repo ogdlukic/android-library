@@ -7,31 +7,31 @@ import android.view.animation.Transformation;
 /**
  * Animation Tranformation.getMatrix() has no issues. But animation properies does. Here are few
  * issues  about animations properties.
- * <p>
+ * <p/>
  * First:
- * <p>
+ * <p/>
  * If your animation touches some elements, then hide them (GONE), some properties may not be
  * recalculated because element is hidden.
- * <p>
+ * <p/>
  * Here is no solution. You have to restore all properties of evey view which may be affected by
  * running animation to its initial state.
- * <p>
+ * <p/>
  * If you dont you may see routated (setRotate) or hidded (setAlpha) elements even if endAnimation()
  * restore thier initial states (do setRotate(0) or setApha(1) do not make them not rotated or
  * visible).
- * <p>
+ * <p/>
  * Second:
- * <p>
+ * <p/>
  * On normal run we have onAnimationEnd() is not final call applyTransformation() called after that.
- * <p>
+ * <p/>
  * applyTransformation()
  * onAnimationEnd()
  * applyTransformation()
- * <p>
+ * <p/>
  * On animation cancel we have:
  * applyTransformation()
  * onAnimationEnd()
- * <p>
+ * <p/>
  * Which makes unpredictable where do we have to finish animation with initial values on top of first
  * statement.
  */

@@ -2,11 +2,7 @@ package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.os.Build;
-import android.support.v4.content.ContextCompat;
 import android.util.TypedValue;
-
-import com.github.axet.androidlibrary.R;
 
 public class ThemeUtils {
 
