@@ -409,8 +409,13 @@ public class WebViewCustom extends WebView {
             String hist = url;
             if (r.getError() == null && r.isHtml()) {
                 html = loadBase(html);
+                // no error, we have to get last redirected url
+                url = r.getUrl();
+                hist = url;
             } else {
+                // we need update url to make WebView reset previous page zoom
                 url = "about:error";
+                // keep history url points to original url, so WebView.reload() keep working properly
             }
 
             base = url;
@@ -437,10 +442,9 @@ public class WebViewCustom extends WebView {
 
     @Override
     public void loadDataWithBaseURL(String baseUrl, String data, String mimeType, String encoding, String historyUrl) {
+        // all inner calles already set url
         if (base != baseUrl) { // external call
-            // all inner calles already set url
-            if (http != null) {
-                // make updateCookies() mecanics work
+            if (http != null) { // make updateCookies() mecanics work
                 removeWebCookies();
             }
             base = baseUrl;

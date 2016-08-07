@@ -1,8 +1,6 @@
 package com.github.axet.androidlibrary.net;
 
-import android.annotation.TargetApi;
 import android.net.Uri;
-import android.os.Build;
 import android.util.Log;
 import android.webkit.WebResourceResponse;
 
@@ -45,6 +43,7 @@ import cz.msebera.android.httpclient.client.methods.CloseableHttpResponse;
 import cz.msebera.android.httpclient.client.methods.HttpGet;
 import cz.msebera.android.httpclient.client.methods.HttpPost;
 import cz.msebera.android.httpclient.client.methods.HttpRequestBase;
+import cz.msebera.android.httpclient.client.methods.HttpUriRequest;
 import cz.msebera.android.httpclient.client.protocol.HttpClientContext;
 import cz.msebera.android.httpclient.conn.ConnectTimeoutException;
 import cz.msebera.android.httpclient.cookie.Cookie;
@@ -56,6 +55,7 @@ import cz.msebera.android.httpclient.impl.client.HttpClientBuilder;
 import cz.msebera.android.httpclient.impl.client.LaxRedirectStrategy;
 import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 import cz.msebera.android.httpclient.message.BasicNameValuePair;
+import cz.msebera.android.httpclient.protocol.HttpCoreContext;
 import cz.msebera.android.httpclient.util.EntityUtils;
 
 // cz.msebera.android.httpclient recommended by apache
@@ -110,6 +110,17 @@ public class HttpClient {
         }
     }
 
+    // http://stackoverflow.com/questions/1456987/httpclient-4-how-to-capture-last-redirect-url
+    public static String getUrl(HttpClientContext context) {
+        Object o = context.getAttribute(HttpCoreContext.HTTP_REQUEST);
+        if (o instanceof HttpUriRequest) {
+            HttpUriRequest currentReq = (HttpUriRequest) o;
+            HttpHost currentHost = (HttpHost) context.getAttribute(HttpCoreContext.HTTP_TARGET_HOST);
+            return (currentReq.getURI().isAbsolute()) ? currentReq.getURI().toString() : (currentHost.toURI() + currentReq.getURI());
+        }
+        return null;
+    }
+
     public static class HttpError extends HttpClient.DownloadResponse {
         static final String UTF8 = "UTF8";
         Throwable e;
@@ -131,11 +142,6 @@ public class HttpClient {
                 return;
             }
             setData(getStream(e));
-        }
-
-        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-        public HttpError(String mimeType, String encoding, int statusCode, String reasonPhrase, Map<String, String> responseHeaders, InputStream data) {
-            super(mimeType, encoding, statusCode, reasonPhrase, responseHeaders, data);
         }
 
         public static InputStream getStream(Throwable e) {
@@ -177,6 +183,7 @@ public class HttpClient {
         public String userAgent;
         public String contentDisposition;
         public long contentLength;
+        String url;
         byte[] buf;
         String encoding;
 
@@ -194,19 +201,14 @@ public class HttpClient {
             return true;
         }
 
-        public DownloadResponse(CloseableHttpResponse response) {
+        public DownloadResponse(HttpClientContext context, HttpUriRequest request, CloseableHttpResponse response) {
             super(null, null, null);
             this.response = response;
             entity = response.getEntity();
             contentType = ContentType.getOrDefault(entity);
-        }
-
-        public DownloadResponse(String userAgent, String contentDisposition, String mimetype, long contentLength) {
-            super(mimetype, null, null);
-            this.userAgent = userAgent;
-            this.contentDisposition = contentDisposition;
-            this.contentLength = contentLength;
-            downloaded = false;
+            url = HttpClient.getUrl(context);
+            if (url == null)
+                url = request.getURI().toString();
         }
 
         public DownloadResponse(String mimeType, String encoding, InputStream data) {
@@ -214,15 +216,8 @@ public class HttpClient {
             downloaded = true;
         }
 
-        public DownloadResponse(String mimeType, String encoding, byte[] data) {
-            super(mimeType, encoding, new ByteArrayInputStream(data));
-            downloaded = true;
-            this.buf = data;
-        }
-
-        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-        public DownloadResponse(String mimeType, String encoding, int statusCode, String reasonPhrase, Map<String, String> responseHeaders, InputStream data) {
-            super(mimeType, encoding, statusCode, reasonPhrase, responseHeaders, data);
+        public String getUrl() {
+            return url;
         }
 
         public byte[] getBuf() {
@@ -519,7 +514,7 @@ public class HttpClient {
         try {
             HttpGet httpGet = new HttpGet(url);
             CloseableHttpResponse response = execute(base, httpGet);
-            return new DownloadResponse(response);
+            return new DownloadResponse(httpClientContext, httpGet, response);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
@@ -558,7 +553,7 @@ public class HttpClient {
             HttpPost httpPost = new HttpPost(url);
             httpPost.setEntity(new UrlEncodedFormEntity(nvps));
             CloseableHttpResponse response = execute(base, httpPost);
-            return new DownloadResponse(response);
+            return new DownloadResponse(httpClientContext, httpPost, response);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
