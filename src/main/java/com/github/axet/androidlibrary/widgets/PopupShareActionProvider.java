@@ -115,9 +115,9 @@ public class PopupShareActionProvider extends ListPopupWindow {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 MenuItem item = adp.getItem(position);
-                if(item.hasSubMenu()) {
+                if (item.hasSubMenu()) {
                     adp.setMenu(item.getSubMenu());
-                }else {
+                } else {
                     mb.performItemAction(item, 0);
                     dismiss();
                 }
