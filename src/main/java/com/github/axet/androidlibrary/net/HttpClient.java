@@ -486,7 +486,6 @@ public class HttpClient {
             request.addHeader("User-Agent", USER_AGENT);
         }
 
-
         return httpclient.execute(request, httpClientContext);
     }
 
