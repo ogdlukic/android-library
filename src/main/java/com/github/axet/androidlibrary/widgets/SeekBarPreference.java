@@ -1,27 +1,13 @@
 package com.github.axet.androidlibrary.widgets;
 
 import android.content.Context;
-import android.content.DialogInterface;
-
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
-
-import android.os.Bundle;
 import android.support.v4.content.SharedPreferencesCompat;
 import android.support.v7.preference.DialogPreference;
 import android.util.AttributeSet;
-
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-
-import android.view.ViewGroup;
-import android.widget.ActionMenuView;
-import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
-
-import java.util.Set;
 
 public class SeekBarPreference extends DialogPreference {
     private SeekBar seekBar = null;
