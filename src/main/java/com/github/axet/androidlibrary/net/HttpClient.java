@@ -3,6 +3,7 @@ package com.github.axet.androidlibrary.net;
 import android.annotation.TargetApi;
 import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 import android.webkit.WebResourceResponse;
 
 import org.apache.commons.io.Charsets;
@@ -14,6 +15,8 @@ import org.jsoup.nodes.Element;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
 import java.nio.charset.Charset;
@@ -42,6 +45,7 @@ import cz.msebera.android.httpclient.client.methods.HttpGet;
 import cz.msebera.android.httpclient.client.methods.HttpPost;
 import cz.msebera.android.httpclient.client.methods.HttpRequestBase;
 import cz.msebera.android.httpclient.client.protocol.HttpClientContext;
+import cz.msebera.android.httpclient.conn.ConnectTimeoutException;
 import cz.msebera.android.httpclient.cookie.Cookie;
 import cz.msebera.android.httpclient.entity.ContentType;
 import cz.msebera.android.httpclient.impl.client.BasicCookieStore;
@@ -102,6 +106,60 @@ public class HttpClient {
             return IOUtils.toString(is, Charset.defaultCharset());
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static class HttpError extends HttpClient.DownloadResponse {
+        static final String UTF8 = "UTF8";
+        Throwable e;
+        String msg;
+
+        public HttpError(Throwable e) {
+            super("text/plain", UTF8, (InputStream) null);
+            this.e = e;
+            while (e.getCause() != null)
+                e = e.getCause();
+            if (e instanceof ConnectTimeoutException) {
+                ConnectTimeoutException t = (ConnectTimeoutException) e;
+                setMessage("Connection Timeout: " + t.getHost());
+            }
+        }
+
+        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+        public HttpError(String mimeType, String encoding, int statusCode, String reasonPhrase, Map<String, String> responseHeaders, InputStream data) {
+            super(mimeType, encoding, statusCode, reasonPhrase, responseHeaders, data);
+        }
+
+        public static InputStream getStream(Throwable e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            return getStream(sw.toString());
+        }
+
+        public static InputStream getStream(String str) {
+            try {
+                return new ByteArrayInputStream(str.getBytes(UTF8));
+            } catch (IOException ee) {
+                Log.e(TAG, "HttpError", ee);
+                return null;
+            }
+        }
+
+        public void setMessage(String msg) {
+            this.msg = msg;
+            setData(getStream(msg));
+        }
+
+        public String getError() {
+            if (msg != null)
+                return msg;
+            return e.getMessage();
+        }
+
+        @Override
+        public boolean isHtml() {
+            return false;
         }
     }
 

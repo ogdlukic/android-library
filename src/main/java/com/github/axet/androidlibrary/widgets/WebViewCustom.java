@@ -32,12 +32,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -76,54 +72,6 @@ public class WebViewCustom extends WebView {
             Log.e(TAG, "load timeout " + url);
         else
             Log.e(TAG, url, e);
-    }
-
-    public static class HttpError extends HttpClient.DownloadResponse {
-        static final String UTF8 = "UTF8";
-        Throwable e;
-        String msg;
-
-        public HttpError(Throwable e) {
-            super("text/plain", UTF8, getStream(e));
-            this.e = e;
-        }
-
-        public HttpError(String msg) {
-            super("text/plain", UTF8, getStream(msg));
-            this.msg = msg;
-        }
-
-        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-        public HttpError(String mimeType, String encoding, int statusCode, String reasonPhrase, Map<String, String> responseHeaders, InputStream data) {
-            super(mimeType, encoding, statusCode, reasonPhrase, responseHeaders, data);
-        }
-
-        public static InputStream getStream(Throwable e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            return getStream(sw.toString());
-        }
-
-        public static InputStream getStream(String str) {
-            try {
-                return new ByteArrayInputStream(str.getBytes(UTF8));
-            } catch (IOException ee) {
-                Log.e(TAG, "HttpError", ee);
-                return null;
-            }
-        }
-
-        public String getError() {
-            if (e != null)
-                return e.getMessage();
-            return msg;
-        }
-
-        @Override
-        public boolean isHtml() {
-            return false;
-        }
     }
 
     public class Interceptor {
@@ -577,7 +525,7 @@ public class WebViewCustom extends WebView {
                     onReceivedError(WebViewCustom.this, e.getMessage(), url);
                 }
             });
-            return new HttpError(e);
+            return new HttpClient.HttpError(e);
         }
     }
 
