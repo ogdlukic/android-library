@@ -411,7 +411,6 @@ public class WebViewCustom extends WebView {
                 html = loadBase(html);
             } else {
                 url = "about:error";
-                hist = null;
             }
 
             base = url;
