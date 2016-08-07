@@ -117,4 +117,7 @@ dependencies {
     compile 'com.android.support:support-v4:23.2.1'
     compile 'com.android.support:appcompat-v7:23.2.1'
     compile 'com.android.support:preference-v14:23.2.1'
+    compile 'cz.msebera.android:httpclient:4.4.1.2'
+    compile 'org.jsoup:jsoup:1.9.2'
+    compile 'commons-io:commons-io:2.5'
 }
