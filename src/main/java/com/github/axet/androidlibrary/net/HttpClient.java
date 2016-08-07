@@ -19,6 +19,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
+import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
@@ -121,8 +122,15 @@ public class HttpClient {
                 e = e.getCause();
             if (e instanceof ConnectTimeoutException) {
                 ConnectTimeoutException t = (ConnectTimeoutException) e;
-                setMessage("Connection Timeout: " + t.getHost());
+                setMessage("Connection Timeout: " + t.getMessage());
+                return;
             }
+            if (e instanceof SocketTimeoutException) {
+                SocketTimeoutException t = (SocketTimeoutException) e;
+                setMessage("Connection Timeout: " + t.getMessage());
+                return;
+            }
+            setData(getStream(e));
         }
 
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
