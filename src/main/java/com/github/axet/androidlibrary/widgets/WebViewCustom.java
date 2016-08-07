@@ -209,6 +209,11 @@ public class WebViewCustom extends WebView {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 Log.d(TAG, "onPageFinished");
+                if (Build.VERSION.SDK_INT < 23) { // TODO make it work for old phones.
+                    if (js != null) {
+                        loadUrlJavaScript(js);
+                    }
+                }
                 if (js_post != null) {
                     loadUrlJavaScript(js_post);
                 }
@@ -433,7 +438,7 @@ public class WebViewCustom extends WebView {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    loadDataWithBaseURL(baseUrl, data, r.getMimeType(), r.getEncoding(), history);
+                    loadDataWithBaseURL(baseUrl, data, r.getMimeType(), "utf-8", history);
                 }
             });
         } catch (final IOException e) {
