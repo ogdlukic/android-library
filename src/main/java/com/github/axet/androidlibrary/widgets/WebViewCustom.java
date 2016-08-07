@@ -195,10 +195,22 @@ public class WebViewCustom extends WebView {
 
         setWebViewClient(new WebViewClient() {
             @Override
+            public void onPageCommitVisible(WebView view, String url) {
+                super.onPageCommitVisible(view, url);
+                Log.d(TAG, "onPageCommitVisible");
+                if (js != null) {
+                    loadUrlJavaScript(""); // sometimes on the first call when called to early js failed to querySelector. double call.
+                    loadUrlJavaScript(js);
+                }
+                WebViewCustom.this.onPageCommitVisible(view, url);
+            }
+
+            @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                Log.d(TAG, "onPageFinished");
                 if (js_post != null) {
-                    loadUrl("javascript:" + js_post);
+                    loadUrlJavaScript(js_post);
                 }
                 WebViewCustom.this.onPageFinished(view, url);
             }
@@ -226,15 +238,6 @@ public class WebViewCustom extends WebView {
                     Log.d(TAG, description);
                 }
                 WebViewCustom.this.onReceivedError(view, description, failingUrl);
-            }
-
-            @Override
-            public void onPageCommitVisible(WebView view, String url) {
-                super.onPageCommitVisible(view, url);
-                if (js != null) {
-                    loadUrl("javascript:" + js);
-                }
-                WebViewCustom.this.onPageCommitVisible(view, url);
             }
 
             @Override
@@ -287,6 +290,10 @@ public class WebViewCustom extends WebView {
 
     public void setHttpClient(HttpClient http) {
         this.http = http;
+    }
+
+    public void loadUrlJavaScript(String js) {
+        loadUrl("javascript:(function(){" + js + "})()");
     }
 
     @Override
@@ -466,29 +473,6 @@ public class WebViewCustom extends WebView {
     public void setDownloadListener(DownloadListener listener) {
         super.setDownloadListener(listener);
         this.listener = listener;
-    }
-
-    public static boolean is_adv(String url) {
-        String[] adv_hosts = {"marketgid.com", "adriver.ru", "thisclick.network", "hghit.com",
-                "onedmp.com", "acint.net", "yadro.ru", "tovarro.com", "marketgid.com", "rtb.com", "adx1.com",
-                "directadvert.ru", "rambler.ru", "alltheladyz.xyz", "ofapes.com", "bongacams.com", "scund.com"};
-        String[] adv_paths = {"brand", "iframe"};
-        Uri u = Uri.parse(url);
-        String host = u.getHost();
-        for (String item : adv_hosts) {
-            if (host != null && host.contains(item)) {
-                return true;
-            }
-        }
-        if (host != null && host.contains("rutracker.org")) {
-            String path = u.getPath();
-            for (String item : adv_paths) {
-                if (path.contains(item)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     // javascript can add cookies. update every new request;
