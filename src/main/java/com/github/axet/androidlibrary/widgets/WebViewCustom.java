@@ -22,9 +22,8 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.github.axet.androidlibrary.net.HttpClient;
-
 import com.github.axet.androidlibrary.R;
+import com.github.axet.androidlibrary.net.HttpClient;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
@@ -367,7 +366,9 @@ public class WebViewCustom extends WebView {
             base = url;
             HttpClient.DownloadResponse w = http.getResponse(base, url);
             w.downloadText();
-            w.setHtml(loadBase(w.getHtml()));
+            if (w.getError() == null && w.isHtml()) {
+                w.setHtml(loadBase(w.getHtml()));
+            }
             return w;
         } else {
             return get(url);
@@ -435,17 +436,28 @@ public class WebViewCustom extends WebView {
     }
 
     // Network on main Thread
-    public void load(final String url, final HttpClient.DownloadResponse r) {
+    public void load(String url, final HttpClient.DownloadResponse r) {
         if (!r.downloaded) {
             listener.onDownloadStart(url, r.userAgent, r.contentDisposition, r.getMimeType(), r.contentLength);
             return;
         }
         try {
-            final String html = IOUtils.toString(r.getData(), r.getEncoding());
+            base = url;
+            String html = IOUtils.toString(r.getData(), r.getEncoding());
+            String hist = url;
+            if (r.getError() == null && r.isHtml()) {
+                html = loadBase(html);
+            } else {
+                url = "about:error";
+                hist = null;
+            }
+            final String baseUrl = url;
+            final String data = html;
+            final String history = hist;
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    loadDataWithBaseURL(url, html, r.getMimeType(), r.getEncoding(), url);
+                    loadDataWithBaseURL(baseUrl, data, r.getMimeType(), r.getEncoding(), history);
                 }
             });
         } catch (final IOException e) {
@@ -461,18 +473,18 @@ public class WebViewCustom extends WebView {
 
     @Override
     public void loadDataWithBaseURL(String baseUrl, String data, String mimeType, String encoding, String historyUrl) {
-        if (base != baseUrl) { // external call
-            // all inner calles already set url
-            if (http != null) {
-                // make updateCookies() mecanics work
-                removeWebCookies();
+        if (data != null) { // clear url call
+            if (base != baseUrl) { // external call
+                // all inner calles already set url
+                if (http != null) {
+                    // make updateCookies() mecanics work
+                    removeWebCookies();
+                }
+                base = baseUrl;
+                data = loadBase(data);
             }
-
-            base = baseUrl;
         }
-
-        String html = loadBase(data);
-        super.loadDataWithBaseURL(baseUrl, html, mimeType, encoding, historyUrl);
+        super.loadDataWithBaseURL(baseUrl, data, mimeType, encoding, historyUrl);
     }
 
     String loadBase(String data) {
