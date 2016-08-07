@@ -185,7 +185,6 @@ public class HttpClient {
         public long contentLength;
         String url;
         byte[] buf;
-        String encoding;
 
         CloseableHttpResponse response;
         HttpEntity entity;
@@ -243,38 +242,36 @@ public class HttpClient {
 
         public void download() {
             try {
-                buf = IOUtils.toByteArray(entity.getContent());
-
-                Charset enc = contentType.getCharset();
-                if (enc == null) {
-                    Document doc = Jsoup.parse(new String(buf, Charset.defaultCharset()));
-                    Element e = doc.select("meta[http-equiv=Content-Type]").first();
-                    if (e != null) {
-                        String content = e.attr("content");
-                        try {
-                            contentType = ContentType.parse(content);
-                            enc = contentType.getCharset();
-                        } catch (ParseException ignore) {
-                        }
-                    } else {
-                        e = doc.select("meta[charset]").first();
+                status = response.getStatusLine();
+                setMimeType(contentType.getMimeType());
+                if (entity != null) { // old phones it can be null
+                    buf = IOUtils.toByteArray(entity.getContent());
+                    Charset enc = contentType.getCharset();
+                    if (enc == null) {
+                        Document doc = Jsoup.parse(new String(buf, Charset.defaultCharset()));
+                        Element e = doc.select("meta[http-equiv=Content-Type]").first();
                         if (e != null) {
-                            String content = e.attr("charset");
+                            String content = e.attr("content");
                             try {
-                                enc = Charset.forName(content);
-                            } catch (UnsupportedCharsetException ignore) {
+                                contentType = ContentType.parse(content);
+                                enc = contentType.getCharset();
+                            } catch (ParseException ignore) {
+                            }
+                        } else {
+                            e = doc.select("meta[charset]").first();
+                            if (e != null) {
+                                String content = e.attr("charset");
+                                try {
+                                    enc = Charset.forName(content);
+                                } catch (UnsupportedCharsetException ignore) {
+                                }
                             }
                         }
                     }
+                    setEncoding(Charsets.toCharset(enc).name());
+                    setData(new ByteArrayInputStream(buf));
+                    downloaded = true;
                 }
-                encoding = Charsets.toCharset(enc).name();
-                downloaded = true;
-
-                status = response.getStatusLine();
-
-                setMimeType(contentType.getMimeType());
-                setEncoding(encoding);
-                setData(new ByteArrayInputStream(buf));
                 consume();
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -292,11 +289,12 @@ public class HttpClient {
         public void attachment() {
             try {
                 status = response.getStatusLine();
+                setMimeType(contentType.getMimeType());
                 Header ct = response.getFirstHeader("Content-Disposition");
                 if (ct != null)
                     contentDisposition = ct.getValue();
-                setMimeType(contentType.getMimeType());
-                contentLength = entity.getContentLength();
+                if (entity != null) // old phones it can be null
+                    contentLength = entity.getContentLength();
                 userAgent = USER_AGENT;
                 consume();
             } catch (IOException e) {
@@ -317,6 +315,10 @@ public class HttpClient {
 
         public boolean isHtml() {
             return getMimeType().equals("text/html");
+        }
+
+        public String getContentType() {
+            return contentType.toString();
         }
     }
 
