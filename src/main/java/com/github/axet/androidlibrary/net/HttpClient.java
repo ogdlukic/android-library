@@ -29,6 +29,7 @@ import cz.msebera.android.httpclient.HttpEntity;
 import cz.msebera.android.httpclient.HttpHost;
 import cz.msebera.android.httpclient.NameValuePair;
 import cz.msebera.android.httpclient.ParseException;
+import cz.msebera.android.httpclient.StatusLine;
 import cz.msebera.android.httpclient.auth.AuthScope;
 import cz.msebera.android.httpclient.auth.UsernamePasswordCredentials;
 import cz.msebera.android.httpclient.client.CookieStore;
@@ -109,9 +110,12 @@ public class HttpClient {
         public String contentDisposition;
         public long contentLength;
         byte[] buf;
+        String encoding;
 
         CloseableHttpResponse response;
         HttpEntity entity;
+        StatusLine status;
+        ContentType contentType;
 
         static boolean download(String mimetype) {
             String[] types = new String[]{"application/x-bittorrent", "audio", "video"};
@@ -125,6 +129,8 @@ public class HttpClient {
         public DownloadResponse(CloseableHttpResponse response) {
             super(null, null, null);
             this.response = response;
+            entity = response.getEntity();
+            contentType = ContentType.getOrDefault(entity);
         }
 
         public DownloadResponse(String userAgent, String contentDisposition, String mimetype, long contentLength) {
@@ -172,62 +178,63 @@ public class HttpClient {
             }
         }
 
-        public void download() throws IOException {
-            HttpEntity entity = response.getEntity();
-            ContentType contentType = ContentType.getOrDefault(entity);
+        public void download() {
+            try {
+                buf = IOUtils.toByteArray(entity.getContent());
 
-            buf = IOUtils.toByteArray(entity.getContent());
-
-            String encoding;
-            Charset enc = contentType.getCharset();
-            if (enc == null) {
-                Document doc = Jsoup.parse(new String(buf, Charset.defaultCharset()));
-                Element e = doc.select("meta[http-equiv=Content-Type]").first();
-                if (e != null) {
-                    String content = e.attr("content");
-                    try {
-                        contentType = ContentType.parse(content);
-                        enc = contentType.getCharset();
-                    } catch (ParseException ignore) {
-                    }
-                } else {
-                    e = doc.select("meta[charset]").first();
+                Charset enc = contentType.getCharset();
+                if (enc == null) {
+                    Document doc = Jsoup.parse(new String(buf, Charset.defaultCharset()));
+                    Element e = doc.select("meta[http-equiv=Content-Type]").first();
                     if (e != null) {
-                        String content = e.attr("charset");
+                        String content = e.attr("content");
                         try {
-                            enc = Charset.forName(content);
-                        } catch (UnsupportedCharsetException ignore) {
+                            contentType = ContentType.parse(content);
+                            enc = contentType.getCharset();
+                        } catch (ParseException ignore) {
+                        }
+                    } else {
+                        e = doc.select("meta[charset]").first();
+                        if (e != null) {
+                            String content = e.attr("charset");
+                            try {
+                                enc = Charset.forName(content);
+                            } catch (UnsupportedCharsetException ignore) {
+                            }
                         }
                     }
                 }
-            }
-            encoding = Charsets.toCharset(enc).name();
-            downloaded = true;
+                encoding = Charsets.toCharset(enc).name();
+                downloaded = true;
 
-            setMimeType(contentType.getMimeType());
-            setEncoding(encoding);
-            setData(new ByteArrayInputStream(buf));
-            consume();
+                status = response.getStatusLine();
+
+                setMimeType(contentType.getMimeType());
+                setEncoding(encoding);
+                setData(new ByteArrayInputStream(buf));
+                consume();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         public void downloadText() {
-            try {
-                HttpEntity entity = response.getEntity();
-                ContentType contentType = ContentType.getOrDefault(entity);
+            if (download(contentType.getMimeType())) {
+                download();
+            } else {
+                attachment();
+            }
+        }
 
-                if (download(contentType.getMimeType())) {
-                    download();
-                } else {
-                    Header ct = response.getFirstHeader("Content-Disposition");
-                    String ctValue = null;
-                    if (ct != null)
-                        ctValue = ct.getValue();
-                    setMimeType(contentType.getMimeType());
-                    contentDisposition = ctValue;
-                    contentLength = entity.getContentLength();
-                    userAgent = USER_AGENT;
-                    consume();
-                }
+        public void attachment() {
+            try {
+                Header ct = response.getFirstHeader("Content-Disposition");
+                if (ct != null)
+                    contentDisposition = ct.getValue();
+                setMimeType(contentType.getMimeType());
+                contentLength = entity.getContentLength();
+                userAgent = USER_AGENT;
+                consume();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -236,6 +243,16 @@ public class HttpClient {
         public void consume() throws IOException {
             EntityUtils.consume(entity);
             response.close();
+        }
+
+        public String getError() {
+            if (status.getStatusCode() != 200)
+                return status.getReasonPhrase();
+            return null;
+        }
+
+        public boolean isHtml() {
+            return getMimeType().equals("text/html");
         }
     }
 
@@ -414,8 +431,6 @@ public class HttpClient {
             DownloadResponse w = getResponse(base, url);
             w.download();
             return w.getHtml();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         } finally {
             request = null;
         }
@@ -426,8 +441,6 @@ public class HttpClient {
             DownloadResponse w = getResponse(base, url);
             w.download();
             return w.getBuf();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         } finally {
             request = null;
         }
@@ -462,8 +475,6 @@ public class HttpClient {
             DownloadResponse w = postResponse(base, url, nvps);
             w.download();
             return w.getHtml();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         } finally {
             request = null;
         }
