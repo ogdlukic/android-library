@@ -58,6 +58,8 @@ import cz.msebera.android.httpclient.util.EntityUtils;
 // https://hc.apache.org/httpcomponents-client-4.5.x/android-port.html
 
 public class HttpClient {
+    public static final String TAG = HttpClient.class.getSimpleName();
+
     public static String USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5 Build/MOB30Y) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.81 Mobile Safari/537.36";
 
     public static int CONNECTION_TIMEOUT = 10 * 1000;
@@ -228,6 +230,7 @@ public class HttpClient {
 
         public void attachment() {
             try {
+                status = response.getStatusLine();
                 Header ct = response.getFirstHeader("Content-Disposition");
                 if (ct != null)
                     contentDisposition = ct.getValue();

@@ -80,13 +80,17 @@ public class WebViewCustom extends WebView {
 
     public static class HttpError extends HttpClient.DownloadResponse {
         static final String UTF8 = "UTF8";
+        Throwable e;
+        String msg;
 
         public HttpError(Throwable e) {
             super("text/plain", UTF8, getStream(e));
+            this.e = e;
         }
 
         public HttpError(String msg) {
             super("text/plain", UTF8, getStream(msg));
+            this.msg = msg;
         }
 
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -108,6 +112,17 @@ public class WebViewCustom extends WebView {
                 Log.e(TAG, "HttpError", ee);
                 return null;
             }
+        }
+
+        public String getError() {
+            if (e != null)
+                return e.getMessage();
+            return msg;
+        }
+
+        @Override
+        public boolean isHtml() {
+            return false;
         }
     }
 
@@ -442,7 +457,6 @@ public class WebViewCustom extends WebView {
             return;
         }
         try {
-            base = url;
             String html = IOUtils.toString(r.getData(), r.getEncoding());
             String hist = url;
             if (r.getError() == null && r.isHtml()) {
@@ -451,6 +465,9 @@ public class WebViewCustom extends WebView {
                 url = "about:error";
                 hist = null;
             }
+
+            base = url;
+
             final String baseUrl = url;
             final String data = html;
             final String history = hist;
@@ -473,16 +490,14 @@ public class WebViewCustom extends WebView {
 
     @Override
     public void loadDataWithBaseURL(String baseUrl, String data, String mimeType, String encoding, String historyUrl) {
-        if (data != null) { // clear url call
-            if (base != baseUrl) { // external call
-                // all inner calles already set url
-                if (http != null) {
-                    // make updateCookies() mecanics work
-                    removeWebCookies();
-                }
-                base = baseUrl;
-                data = loadBase(data);
+        if (base != baseUrl) { // external call
+            // all inner calles already set url
+            if (http != null) {
+                // make updateCookies() mecanics work
+                removeWebCookies();
             }
+            base = baseUrl;
+            data = loadBase(data);
         }
         super.loadDataWithBaseURL(baseUrl, data, mimeType, encoding, historyUrl);
     }
