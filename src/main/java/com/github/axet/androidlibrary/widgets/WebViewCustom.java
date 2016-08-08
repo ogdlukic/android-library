@@ -56,6 +56,8 @@ import java.util.TreeSet;
 public class WebViewCustom extends WebView {
     public static final String TAG = WebViewCustom.class.getSimpleName();
 
+    public static final String INJECTS_URL = "inject://";
+
     String js;
     String js_post;
 
@@ -66,7 +68,6 @@ public class WebViewCustom extends WebView {
     String base;
     DownloadListener listener;
     ArrayList<String> injects = new ArrayList<>();
-    String injectsUrl = "inject://";
 
     public static final String md5(final String s) {
         final String MD5 = "MD5";
@@ -209,8 +210,6 @@ public class WebViewCustom extends WebView {
 
             @Override
             public void onConsoleMessage(String msg, int lineNumber, String sourceID) {
-                if (sourceID.startsWith(injectsUrl))
-                    sourceID = "";
                 WebViewCustom.this.onConsoleMessage(msg, lineNumber, sourceID);
             }
 
@@ -321,7 +320,7 @@ public class WebViewCustom extends WebView {
     }
 
     HttpClient.DownloadResponse getInject(String url) {
-        if (url.startsWith(injectsUrl)) {
+        if (url.startsWith(INJECTS_URL)) {
             Uri u = Uri.parse(url);
             int i = Integer.parseInt(u.getAuthority());
             String js = injects.get(i);
@@ -519,7 +518,7 @@ public class WebViewCustom extends WebView {
     String addInject(String js) {
         int i = injects.size();
         injects.add(js);
-        return "<script type='text/javascript' src='" + injectsUrl + i + "?md5=" + md5(js) + "'/>";
+        return "<script type='text/javascript' src='" + INJECTS_URL + i + "?md5=" + md5(js) + "'/>";
     }
 
     @Override

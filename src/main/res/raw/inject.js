@@ -12,20 +12,20 @@ function interceptor(e) {
     for (i = 0; i < form.elements.length; i++) {
         var name = form.elements[i].name;
         var value = form.elements[i].value;
-        aa.push({name, value});
+        aa.push({"name" : name, "value" : value});
     }
     interception.customSubmit(
             form.attributes['method'] === undefined ? null
                     : form.attributes['method'].nodeValue,
             form.attributes['action'] === undefined ? null
                     : form.attributes['action'].nodeValue,
-            JSON.stringify({"form":aa}));
+            JSON.stringify({"form" : aa}));
 }
 
 // 3) XMLHttpRequest.prototype.send
 var XMLHttpRequest = function () {
     this.open = function(method, url, async, user, password) {
-        this.params = {method, url, async, user, password};
+        this.params = {"method" : method, "url" : url, "async" : async, "user" : user, "password" : password};
     }
     this.send = function(body) {
         var params = this.params
