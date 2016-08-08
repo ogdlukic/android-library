@@ -68,6 +68,7 @@ public class WebViewCustom extends WebView {
     String base;
     DownloadListener listener;
     ArrayList<String> injects = new ArrayList<>();
+    String html;
 
     public static final String md5(final String s) {
         final String MD5 = "MD5";
@@ -331,6 +332,7 @@ public class WebViewCustom extends WebView {
         }
     }
 
+    // get base html page
     HttpClient.DownloadResponse getBase(String url) {
         if (url.startsWith("data")) {
             return null;
@@ -347,6 +349,7 @@ public class WebViewCustom extends WebView {
             w.downloadText();
             if (w.getError() == null && w.isHtml()) {
                 w.setHtml(loadBase(w.getHtml()));
+                this.html = w.getHtml();
             }
             return w;
         } else {
@@ -442,7 +445,7 @@ public class WebViewCustom extends WebView {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    loadDataWithBaseURL(baseUrl, data, r.getMimeType(), Charset.defaultCharset().name(), history);
+                    loadHtmlWithBaseURL(baseUrl, data, history);
                 }
             });
         } catch (final IOException e) {
@@ -456,6 +459,10 @@ public class WebViewCustom extends WebView {
         }
     }
 
+    public void loadHtmlWithBaseURL(String baseUrl, String html, String historyUrl) {
+        loadDataWithBaseURL(baseUrl, html, "text/html", Charset.defaultCharset().name(), historyUrl);
+    }
+
     @Override
     public void loadDataWithBaseURL(String baseUrl, String data, String mimeType, String encoding, String historyUrl) {
         // all inner calles already set url
@@ -466,6 +473,7 @@ public class WebViewCustom extends WebView {
             base = baseUrl;
             data = loadBase(data);
         }
+        this.html = data;
         super.loadDataWithBaseURL(baseUrl, data, mimeType, encoding, historyUrl);
     }
 
@@ -559,7 +567,7 @@ public class WebViewCustom extends WebView {
 
     public String formatInjectError(String url, int line) {
         String js = null;
-        if (url == null) {
+        if (url == null || url.isEmpty()) { // null? then it is js_post call
             js = js_post;
         } else {
             HttpClient.DownloadResponse w = getInject(url);
@@ -567,18 +575,11 @@ public class WebViewCustom extends WebView {
                 js = w.getHtml();
             }
         }
-        if (js == null)
-            return null;
-        String[] lines = js.split("\n");
-
-        // show script line
-        int t = line - 1;
-        if (t < 0)
+        if (js == null) // no known script error
             return "";
-        if (t < lines.length)
-            return lines[t];
-        // backup plan, try (line - 1)
-        t = t - 1;
+        String[] lines = js.split("\n");
+        // get script line
+        int t = line - 1;
         if (t < 0)
             return "";
         if (t < lines.length)
@@ -638,6 +639,10 @@ public class WebViewCustom extends WebView {
 
     public void setInjectPost(String js) {
         this.js_post = js;
+    }
+
+    public String getHtml() {
+        return html;
     }
 
     // not working. use removeAllCookies() then add ones you need.
