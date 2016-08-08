@@ -38,6 +38,8 @@ import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -63,6 +65,32 @@ public class WebViewCustom extends WebView {
     HttpClient http;
     String base;
     DownloadListener listener;
+    ArrayList<String> injects = new ArrayList<>();
+    String injectsUrl = "inject://";
+
+    public static final String md5(final String s) {
+        final String MD5 = "MD5";
+        try {
+            // Create MD5 Hash
+            MessageDigest digest = java.security.MessageDigest
+                    .getInstance(MD5);
+            digest.update(s.getBytes());
+            byte messageDigest[] = digest.digest();
+
+            // Create Hex String
+            StringBuilder hexString = new StringBuilder();
+            for (byte aMessageDigest : messageDigest) {
+                String h = Integer.toHexString(0xFF & aMessageDigest);
+                while (h.length() < 2)
+                    h = "0" + h;
+                hexString.append(h);
+            }
+            return hexString.toString();
+
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     static void logIO(String url, Throwable e) {
         while (e.getCause() != null) {
@@ -181,6 +209,8 @@ public class WebViewCustom extends WebView {
 
             @Override
             public void onConsoleMessage(String msg, int lineNumber, String sourceID) {
+                if (sourceID.startsWith(injectsUrl))
+                    sourceID = "";
                 WebViewCustom.this.onConsoleMessage(msg, lineNumber, sourceID);
             }
 
@@ -198,10 +228,6 @@ public class WebViewCustom extends WebView {
             public void onPageCommitVisible(WebView view, String url) {
                 super.onPageCommitVisible(view, url);
                 Log.d(TAG, "onPageCommitVisible");
-                if (js != null) {
-                    loadUrlJavaScript(""); // sometimes on the first call when called to early js failed to querySelector. double call.
-                    loadUrlJavaScript(js);
-                }
                 WebViewCustom.this.onPageCommitVisible(view, url);
             }
 
@@ -209,11 +235,6 @@ public class WebViewCustom extends WebView {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 Log.d(TAG, "onPageFinished");
-                if (Build.VERSION.SDK_INT < 23) { // TODO make it work for old phones.
-                    if (js != null) {
-                        loadUrlJavaScript(js);
-                    }
-                }
                 if (js_post != null) {
                     loadUrlJavaScript(js_post);
                 }
@@ -270,6 +291,9 @@ public class WebViewCustom extends WebView {
             @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                HttpClient.DownloadResponse w = getInject(request.getUrl().toString());
+                if (w != null)
+                    return w;
                 if (http != null) {
                     // ignore POST it comes with no data
                     if (request.getMethod().toUpperCase().equals("GET")) {
@@ -283,6 +307,9 @@ public class WebViewCustom extends WebView {
 
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+                HttpClient.DownloadResponse w = getInject(url);
+                if (w != null)
+                    return w;
                 if (http != null)
                     return getBase(url);
                 else
@@ -291,6 +318,16 @@ public class WebViewCustom extends WebView {
         });
 
         addJavascriptInterface(new Interceptor(), "interception");
+    }
+
+    HttpClient.DownloadResponse getInject(String url) {
+        if (url.startsWith(injectsUrl)) {
+            Uri u = Uri.parse(url);
+            int i = Integer.parseInt(u.getAuthority());
+            String js = injects.get(i);
+            return new HttpClient.DownloadResponse("text/javascript", Charset.defaultCharset().name(), js);
+        }
+        return null;
     }
 
     public void setHttpClient(HttpClient http) {
@@ -438,7 +475,7 @@ public class WebViewCustom extends WebView {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    loadDataWithBaseURL(baseUrl, data, r.getMimeType(), "utf-8", history);
+                    loadDataWithBaseURL(baseUrl, data, r.getMimeType(), Charset.defaultCharset().name(), history);
                 }
             });
         } catch (final IOException e) {
@@ -469,9 +506,20 @@ public class WebViewCustom extends WebView {
         Document doc = Jsoup.parse(data);
         Element head = doc.getElementsByTag("head").first();
         if (head != null) {
-            head.prepend(inject);
+            head.prepend(addInject(inject));
+        }
+        if (js != null) {
+            Element body = doc.getElementsByTag("body").first();
+            if (body != null)
+                body.append(addInject(js));
         }
         return doc.outerHtml();
+    }
+
+    String addInject(String js) {
+        int i = injects.size();
+        injects.add(js);
+        return "<script type='text/javascript' src='" + injectsUrl + i + "?md5=" + md5(js) + "'/>";
     }
 
     @Override
