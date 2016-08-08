@@ -581,12 +581,6 @@ public class WebViewCustom extends WebView {
             return "";
         if (t < lines.length)
             return lines[t];
-        // backup plan, try (line - 1)
-        t = t - 1;
-        if (t < 0)
-            return "";
-        if (t < lines.length)
-            return lines[t];
         // show no line
         return "";
     }
