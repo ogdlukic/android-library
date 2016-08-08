@@ -68,6 +68,7 @@ public class WebViewCustom extends WebView {
     String base;
     DownloadListener listener;
     ArrayList<String> injects = new ArrayList<>();
+    String html;
 
     public static final String md5(final String s) {
         final String MD5 = "MD5";
@@ -347,6 +348,7 @@ public class WebViewCustom extends WebView {
             w.downloadText();
             if (w.getError() == null && w.isHtml()) {
                 w.setHtml(loadBase(w.getHtml()));
+                this.html = w.getHtml();
             }
             return w;
         } else {
@@ -462,6 +464,7 @@ public class WebViewCustom extends WebView {
 
     @Override
     public void loadDataWithBaseURL(String baseUrl, String data, String mimeType, String encoding, String historyUrl) {
+        this.html = data;
         // all inner calles already set url
         if (base != baseUrl) { // external call
             if (http != null) { // make updateCookies() mecanics work
@@ -635,6 +638,10 @@ public class WebViewCustom extends WebView {
 
     public void setInjectPost(String js) {
         this.js_post = js;
+    }
+
+    public String getHtml() {
+        return html;
     }
 
     // not working. use removeAllCookies() then add ones you need.
