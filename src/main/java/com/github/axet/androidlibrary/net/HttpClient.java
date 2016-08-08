@@ -17,7 +17,11 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
+import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
@@ -517,9 +521,22 @@ public class HttpClient {
         }
     }
 
+    // deal with java.lang.IllegalArgumentException: Illegal character in path at index
+    String safe(String url) {
+        try {
+            URL u = new URL(url);
+            URI uri = new URI(u.getProtocol(), u.getUserInfo(), u.getHost(), u.getPort(), u.getPath(), u.getQuery(), u.getRef());
+            return uri.toString();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public DownloadResponse getResponse(String base, String url) {
         try {
-            HttpGet httpGet = new HttpGet(url);
+            HttpGet httpGet = new HttpGet(safe(url));
             CloseableHttpResponse response = execute(base, httpGet);
             return new DownloadResponse(httpClientContext, httpGet, response);
         } catch (IOException e) {
@@ -557,7 +574,7 @@ public class HttpClient {
 
     public DownloadResponse postResponse(String base, String url, List<NameValuePair> nvps) {
         try {
-            HttpPost httpPost = new HttpPost(url);
+            HttpPost httpPost = new HttpPost(safe(url));
             httpPost.setEntity(new UrlEncodedFormEntity(nvps));
             CloseableHttpResponse response = execute(base, httpPost);
             return new DownloadResponse(httpClientContext, httpPost, response);
