@@ -442,7 +442,7 @@ public class WebViewCustom extends WebView {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    loadDataWithBaseURL(baseUrl, data, r.getMimeType(), Charset.defaultCharset().name(), history);
+                    loadHtmlWithBaseURL(baseUrl, data, history);
                 }
             });
         } catch (final IOException e) {
@@ -454,6 +454,10 @@ public class WebViewCustom extends WebView {
                 }
             });
         }
+    }
+
+    public void loadHtmlWithBaseURL(String baseUrl, String html, String historyUrl) {
+        loadDataWithBaseURL(baseUrl, html, "text/html", Charset.defaultCharset().name(), historyUrl);
     }
 
     @Override
