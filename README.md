@@ -33,7 +33,7 @@ Expandable List View
 ## gradle
 
 ```gradle
-    compile 'com.github.axet:android-library:1.0.13'
+    compile 'com.github.axet:android-library:1.2.8'
 ```
 
 ## maven
@@ -42,7 +42,7 @@ Expandable List View
 <dependency>
   <groupId>com.github.axet</groupId>
   <artifactId>android-library</artifactId>
-  <version>1.0.13</version>
+  <version>1.2.8</version>
   <type>aar</type>
 </dependency>
 ```
