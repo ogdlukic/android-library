@@ -215,6 +215,12 @@ public class HttpClient {
             downloaded = true;
         }
 
+        public DownloadResponse(String mimeType, String encoding, String data) {
+            super(mimeType, encoding, null);
+            setHtml(data);
+            downloaded = true;
+        }
+
         public String getUrl() {
             return url;
         }
