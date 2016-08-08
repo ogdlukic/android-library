@@ -332,6 +332,7 @@ public class WebViewCustom extends WebView {
         }
     }
 
+    // get base html page
     HttpClient.DownloadResponse getBase(String url) {
         if (url.startsWith("data")) {
             return null;
@@ -464,7 +465,6 @@ public class WebViewCustom extends WebView {
 
     @Override
     public void loadDataWithBaseURL(String baseUrl, String data, String mimeType, String encoding, String historyUrl) {
-        this.html = data;
         // all inner calles already set url
         if (base != baseUrl) { // external call
             if (http != null) { // make updateCookies() mecanics work
@@ -473,6 +473,7 @@ public class WebViewCustom extends WebView {
             base = baseUrl;
             data = loadBase(data);
         }
+        this.html = data;
         super.loadDataWithBaseURL(baseUrl, data, mimeType, encoding, historyUrl);
     }
 
