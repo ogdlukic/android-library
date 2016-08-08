@@ -563,7 +563,7 @@ public class WebViewCustom extends WebView {
 
     public String formatInjectError(String url, int line) {
         String js = null;
-        if (url == null) {
+        if (url == null || url.isEmpty()) { // null? then it is js_post call
             js = js_post;
         } else {
             HttpClient.DownloadResponse w = getInject(url);
@@ -571,11 +571,10 @@ public class WebViewCustom extends WebView {
                 js = w.getHtml();
             }
         }
-        if (js == null)
+        if (js == null) // no known script error
             return null;
         String[] lines = js.split("\n");
-
-        // show script line
+        // get script line
         int t = line - 1;
         if (t < 0)
             return "";
