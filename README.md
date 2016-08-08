@@ -28,6 +28,12 @@ Expandable List View
 
 ![expanditem.gif](./docs/expanditem.gif)
 
+WebViewCustom
+
+* [WebViewCustom.java](./src/main/java/com/github/axet/androidlibrary/widgets/WebViewCustom.java)
+
+Support Apache HttpClient, Proxying...
+
 # Install
 
 ## gradle
