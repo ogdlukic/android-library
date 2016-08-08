@@ -576,7 +576,7 @@ public class WebViewCustom extends WebView {
             }
         }
         if (js == null) // no known script error
-            return null;
+            return "";
         String[] lines = js.split("\n");
         // get script line
         int t = line - 1;
