@@ -193,7 +193,6 @@ public class WebViewCustom extends WebView {
         setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                super.onProgressChanged(view, newProgress);
                 WebViewCustom.this.onProgressChanged(view, newProgress);
             }
 
@@ -204,8 +203,7 @@ public class WebViewCustom extends WebView {
 
             @Override
             public boolean onConsoleMessage(final ConsoleMessage consoleMessage) {
-                onConsoleMessage(consoleMessage.message(), consoleMessage.lineNumber(), consoleMessage.sourceId());
-                return true;//super.onConsoleMessage(consoleMessage);
+                return WebViewCustom.this.onConsoleMessage(consoleMessage.message(), consoleMessage.lineNumber(), consoleMessage.sourceId());
             }
 
             @Override
@@ -215,10 +213,7 @@ public class WebViewCustom extends WebView {
 
             @Override
             public boolean onJsAlert(WebView view, String url, final String message, JsResult result) {
-                Log.d(TAG, message);
-                result.confirm();
-                WebViewCustom.this.onJsAlert(view, url, message, result);
-                return true;//super.onJsAlert(view, url, message, result);
+                return WebViewCustom.this.onJsAlert(view, url, message, result);
             }
         });
 
@@ -226,17 +221,12 @@ public class WebViewCustom extends WebView {
             @Override
             public void onPageCommitVisible(WebView view, String url) {
                 super.onPageCommitVisible(view, url);
-                Log.d(TAG, "onPageCommitVisible");
                 WebViewCustom.this.onPageCommitVisible(view, url);
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                Log.d(TAG, "onPageFinished");
-                if (js_post != null) {
-                    loadUrlJavaScript(js_post);
-                }
                 WebViewCustom.this.onPageFinished(view, url);
             }
 
@@ -250,9 +240,7 @@ public class WebViewCustom extends WebView {
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
-                String str = error.getDescription().toString();
-                Log.d(TAG, str);
-                WebViewCustom.this.onReceivedError(view, str, request.getUrl().toString());
+                WebViewCustom.this.onReceivedError(view, error.getDescription().toString(), request.getUrl().toString());
             }
 
             @Override
@@ -260,9 +248,8 @@ public class WebViewCustom extends WebView {
                 super.onReceivedError(view, errorCode, description, failingUrl);
                 // on M will becalled above method
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                    Log.d(TAG, description);
+                    WebViewCustom.this.onReceivedError(view, description, failingUrl);
                 }
-                WebViewCustom.this.onReceivedError(view, description, failingUrl);
             }
 
             @Override
@@ -279,40 +266,21 @@ public class WebViewCustom extends WebView {
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                // let user overide it first
-                if (WebViewCustom.this.shouldOverrideUrlLoading(view, url))
-                    return true;
-                // load page using our code, we may need to inject.
-                loadUrl(url);
-                return true;
+                return WebViewCustom.this.shouldOverrideUrlLoading(view, url);
             }
 
             @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                HttpClient.DownloadResponse w = getInject(request.getUrl().toString());
-                if (w != null)
-                    return w;
-                if (http != null) {
-                    // ignore POST it comes with no data
-                    if (request.getMethod().toUpperCase().equals("GET")) {
-                        return getBase(request.getUrl().toString());
-                    } else {
-                        return super.shouldInterceptRequest(view, request);
-                    }
-                }
+                // post come with not data, ignore at all.
+                if (request.getMethod().equals("POST"))
+                    return null;
                 return super.shouldInterceptRequest(view, request);
             }
 
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-                HttpClient.DownloadResponse w = getInject(url);
-                if (w != null)
-                    return w;
-                if (http != null)
-                    return getBase(url);
-                else
-                    return super.shouldInterceptRequest(view, url);
+                return WebViewCustom.this.shouldInterceptRequest(view, url);
             }
         });
 
@@ -583,23 +551,64 @@ public class WebViewCustom extends WebView {
     public void onProgressChanged(WebView view, int newProgress) {
     }
 
-    public void onConsoleMessage(String msg, int lineNumber, String sourceID) {
-        Log.d(TAG, msg);
+    public boolean onConsoleMessage(String msg, int lineNumber, String sourceID) {
+        String line = formatInjectError(sourceID, lineNumber);
+        Log.d(TAG, "onConsoleMessage: " + msg + ", " + "[" + lineNumber + "] " + line + ", " + sourceID);
+        return true;
     }
 
-    public void onJsAlert(WebView view, String url, final String message, JsResult result) {
+    public String formatInjectError(String url, int line) {
+        String js = null;
+        if (url == null) {
+            js = js_post;
+        } else {
+            HttpClient.DownloadResponse w = getInject(url);
+            if (w != null) {
+                js = w.getHtml();
+            }
+        }
+        if (js == null)
+            return null;
+        String[] lines = js.split("\n");
+
+        // show script line
+        int t = line - 1;
+        if (t < 0)
+            return "";
+        if (t < lines.length)
+            return lines[t];
+        // backup plan, try (line - 1)
+        t = t - 1;
+        if (t < 0)
+            return "";
+        if (t < lines.length)
+            return lines[t];
+        // show no line
+        return "";
+    }
+
+    public boolean onJsAlert(WebView view, String url, final String message, JsResult result) {
+        Log.d(TAG, message);
+        result.confirm();
+        return true;
     }
 
     public void onPageFinished(WebView view, String url) {
+        Log.d(TAG, "onPageFinished");
+        if (js_post != null) {
+            loadUrlJavaScript(js_post);
+        }
     }
 
     public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
     }
 
     public void onPageCommitVisible(WebView view, String url) {
+        Log.d(TAG, "onPageCommitVisible");
     }
 
     public void onReceivedError(WebView view, String message, String url) {
+        Log.d(TAG, message);
     }
 
     public void onLoadResource(WebView view, String url) {
@@ -609,7 +618,18 @@ public class WebViewCustom extends WebView {
     }
 
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
-        return false;
+        // user did not overide it. load page using our code, we may need to inject.
+        loadUrl(url);
+        return true;
+    }
+
+    public HttpClient.DownloadResponse shouldInterceptRequest(WebView view, String url) {
+        HttpClient.DownloadResponse w = getInject(url);
+        if (w != null)
+            return w;
+        if (http != null)
+            return getBase(url);
+        return null;
     }
 
     public void setInject(String js) {
