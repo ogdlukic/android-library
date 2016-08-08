@@ -506,17 +506,17 @@ public class WebViewCustom extends WebView {
         Document doc = Jsoup.parse(data);
         Element head = doc.getElementsByTag("head").first();
         if (head != null) {
-            head.prepend(addInject(head, inject));
+            head.prepend(addInject(inject));
         }
         if (js != null) {
             Element body = doc.getElementsByTag("body").first();
             if (body != null)
-                body.append(addInject(head, js));
+                body.append(addInject(js));
         }
         return doc.outerHtml();
     }
 
-    String addInject(Element head, String js) {
+    String addInject(String js) {
         int i = injects.size();
         injects.add(js);
         return "<script type='text/javascript' src='" + injectsUrl + i + "?md5=" + md5(js) + "'/>";
