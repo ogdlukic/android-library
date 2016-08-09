@@ -371,7 +371,7 @@ public class HttpClient {
 
         // javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0xb89bbee8: Failure in SSL library, usually a protocol error
         // error:14077438:SSL routines:SSL23_GET_SERVER_HELLO:tlsv1 alert internal error (external/openssl/ssl/s23_clnt.c:741 0xaf144a4d:0x00000000)
-        if (Build.VERSION.SDK_INT <= 17) {
+        if (Build.VERSION.SDK_INT <= 16) {
             TrustManager[] byPassTrustManagers = new TrustManager[]{new X509TrustManager() {
                 public X509Certificate[] getAcceptedIssuers() {
                     return new X509Certificate[0];
