@@ -83,14 +83,15 @@ public class HttpClient {
     public static final String TAG = HttpClient.class.getSimpleName();
 
     public static String USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5 Build/MOB30Y) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.81 Mobile Safari/537.36";
+    public static final String CONTENTTYPE_HTML = "text/html";
 
     public static int CONNECTION_TIMEOUT = 10 * 1000;
 
-    CloseableHttpClient httpclient;
-    HttpClientContext httpClientContext = HttpClientContext.create();
-    AbstractExecutionAwareRequest request;
-    RequestConfig config;
-    CredentialsProvider credsProvider;
+    protected CloseableHttpClient httpclient;
+    protected HttpClientContext httpClientContext = HttpClientContext.create();
+    protected AbstractExecutionAwareRequest request;
+    protected RequestConfig config;
+    protected CredentialsProvider credsProvider;
 
     public static HttpCookie from(Cookie c) {
         HttpCookie cookie = new HttpCookie(c.getName(), c.getValue());
@@ -337,7 +338,7 @@ public class HttpClient {
         }
 
         public boolean isHtml() {
-            return getMimeType().equals("text/html");
+            return getMimeType().equals(CONTENTTYPE_HTML);
         }
 
         public String getContentType() {
@@ -417,6 +418,10 @@ public class HttpClient {
 
     public void clearProxy() {
         config = null;
+    }
+
+    public RequestConfig getConfig() {
+        return config;
     }
 
     public void addCookies(String url, String cookies) {
@@ -538,13 +543,19 @@ public class HttpClient {
 
         if (config != null)
             request.setConfig(config);
+
         if (base != null) {
-            request.addHeader("Referer", base);
+            if (!base.equals(request.getURI().toString()))
+                request.addHeader("Referer", base);
             Uri u = Uri.parse(base);
             request.addHeader("Origin", new Uri.Builder().scheme(u.getScheme()).authority(u.getAuthority()).toString());
             request.addHeader("User-Agent", USER_AGENT);
         }
 
+        return execute(request);
+    }
+
+    public CloseableHttpResponse execute(HttpRequestBase request) throws IOException {
         return httpclient.execute(request, httpClientContext);
     }
 

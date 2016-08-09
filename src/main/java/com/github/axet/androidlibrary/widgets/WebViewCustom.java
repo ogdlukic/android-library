@@ -460,7 +460,7 @@ public class WebViewCustom extends WebView {
     }
 
     public void loadHtmlWithBaseURL(String baseUrl, String html, String historyUrl) {
-        loadDataWithBaseURL(baseUrl, html, "text/html", Charset.defaultCharset().name(), historyUrl);
+        loadDataWithBaseURL(baseUrl, html, HttpClient.CONTENTTYPE_HTML, Charset.defaultCharset().name(), historyUrl);
     }
 
     @Override
