@@ -1,6 +1,7 @@
 package com.github.axet.androidlibrary.net;
 
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 import android.webkit.WebResourceResponse;
 
@@ -24,11 +25,22 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.HttpEntity;
@@ -50,6 +62,7 @@ import cz.msebera.android.httpclient.client.methods.HttpRequestBase;
 import cz.msebera.android.httpclient.client.methods.HttpUriRequest;
 import cz.msebera.android.httpclient.client.protocol.HttpClientContext;
 import cz.msebera.android.httpclient.conn.ConnectTimeoutException;
+import cz.msebera.android.httpclient.conn.ssl.SSLConnectionSocketFactory;
 import cz.msebera.android.httpclient.cookie.Cookie;
 import cz.msebera.android.httpclient.entity.ContentType;
 import cz.msebera.android.httpclient.impl.client.BasicCookieStore;
@@ -70,14 +83,15 @@ public class HttpClient {
     public static final String TAG = HttpClient.class.getSimpleName();
 
     public static String USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5 Build/MOB30Y) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.81 Mobile Safari/537.36";
+    public static final String CONTENTTYPE_HTML = "text/html";
 
     public static int CONNECTION_TIMEOUT = 10 * 1000;
 
-    CloseableHttpClient httpclient;
-    HttpClientContext httpClientContext = HttpClientContext.create();
-    AbstractExecutionAwareRequest request;
-    RequestConfig config;
-    CredentialsProvider credsProvider;
+    protected CloseableHttpClient httpclient;
+    protected HttpClientContext httpClientContext = HttpClientContext.create();
+    protected AbstractExecutionAwareRequest request;
+    protected RequestConfig config;
+    protected CredentialsProvider credsProvider;
 
     public static HttpCookie from(Cookie c) {
         HttpCookie cookie = new HttpCookie(c.getName(), c.getValue());
@@ -324,7 +338,7 @@ public class HttpClient {
         }
 
         public boolean isHtml() {
-            return getMimeType().equals("text/html");
+            return getMimeType().equals(CONTENTTYPE_HTML);
         }
 
         public String getContentType() {
@@ -351,11 +365,45 @@ public class HttpClient {
         if (credsProvider == null)
             credsProvider = new BasicCredentialsProvider();
 
-        httpclient = HttpClientBuilder.create()
-                .setDefaultRequestConfig(requestBuilder.build())
-                .setRedirectStrategy(new LaxRedirectStrategy())
-                .setDefaultCredentialsProvider(credsProvider)
-                .build();
+        HttpClientBuilder builder = HttpClientBuilder.create();
+        builder.setDefaultRequestConfig(requestBuilder.build());
+        builder.setRedirectStrategy(new LaxRedirectStrategy());
+        builder.setDefaultCredentialsProvider(credsProvider);
+
+        // javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0xb89bbee8: Failure in SSL library, usually a protocol error
+        // error:14077438:SSL routines:SSL23_GET_SERVER_HELLO:tlsv1 alert internal error (external/openssl/ssl/s23_clnt.c:741 0xaf144a4d:0x00000000)
+        if (Build.VERSION.SDK_INT <= 16) {
+            TrustManager[] byPassTrustManagers = new TrustManager[]{new X509TrustManager() {
+                public X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[0];
+                }
+
+                public void checkClientTrusted(X509Certificate[] chain, String authType) {
+                }
+
+                public void checkServerTrusted(X509Certificate[] chain, String authType) {
+                }
+            }};
+            HostnameVerifier v = new HostnameVerifier() {
+                @Override
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            };
+            try {
+                SSLContext sc = SSLContext.getInstance("TLS");
+                sc.init(null, byPassTrustManagers, new SecureRandom());
+                HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+                HttpsURLConnection.setDefaultHostnameVerifier(v);
+                builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sc, v));
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            } catch (KeyManagementException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        httpclient = builder.build();
     }
 
     public void setProxy(String host, int port, String scheme) {
@@ -370,6 +418,10 @@ public class HttpClient {
 
     public void clearProxy() {
         config = null;
+    }
+
+    public RequestConfig getConfig() {
+        return config;
     }
 
     public void addCookies(String url, String cookies) {
@@ -491,13 +543,19 @@ public class HttpClient {
 
         if (config != null)
             request.setConfig(config);
+
         if (base != null) {
-            request.addHeader("Referer", base);
+            if (!base.equals(request.getURI().toString()))
+                request.addHeader("Referer", base);
             Uri u = Uri.parse(base);
             request.addHeader("Origin", new Uri.Builder().scheme(u.getScheme()).authority(u.getAuthority()).toString());
             request.addHeader("User-Agent", USER_AGENT);
         }
 
+        return execute(request);
+    }
+
+    public CloseableHttpResponse execute(HttpRequestBase request) throws IOException {
         return httpclient.execute(request, httpClientContext);
     }
 
