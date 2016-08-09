@@ -1,6 +1,7 @@
 package com.github.axet.androidlibrary.net;
 
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 import android.webkit.WebResourceResponse;
 
@@ -24,11 +25,22 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.HttpEntity;
@@ -50,6 +62,7 @@ import cz.msebera.android.httpclient.client.methods.HttpRequestBase;
 import cz.msebera.android.httpclient.client.methods.HttpUriRequest;
 import cz.msebera.android.httpclient.client.protocol.HttpClientContext;
 import cz.msebera.android.httpclient.conn.ConnectTimeoutException;
+import cz.msebera.android.httpclient.conn.ssl.SSLConnectionSocketFactory;
 import cz.msebera.android.httpclient.cookie.Cookie;
 import cz.msebera.android.httpclient.entity.ContentType;
 import cz.msebera.android.httpclient.impl.client.BasicCookieStore;
@@ -351,11 +364,45 @@ public class HttpClient {
         if (credsProvider == null)
             credsProvider = new BasicCredentialsProvider();
 
-        httpclient = HttpClientBuilder.create()
-                .setDefaultRequestConfig(requestBuilder.build())
-                .setRedirectStrategy(new LaxRedirectStrategy())
-                .setDefaultCredentialsProvider(credsProvider)
-                .build();
+        HttpClientBuilder builder = HttpClientBuilder.create();
+        builder.setDefaultRequestConfig(requestBuilder.build());
+        builder.setRedirectStrategy(new LaxRedirectStrategy());
+        builder.setDefaultCredentialsProvider(credsProvider);
+
+        // javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0xb89bbee8: Failure in SSL library, usually a protocol error
+        // error:14077438:SSL routines:SSL23_GET_SERVER_HELLO:tlsv1 alert internal error (external/openssl/ssl/s23_clnt.c:741 0xaf144a4d:0x00000000)
+        if (Build.VERSION.SDK_INT <= 17) {
+            TrustManager[] byPassTrustManagers = new TrustManager[]{new X509TrustManager() {
+                public X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[0];
+                }
+
+                public void checkClientTrusted(X509Certificate[] chain, String authType) {
+                }
+
+                public void checkServerTrusted(X509Certificate[] chain, String authType) {
+                }
+            }};
+            HostnameVerifier v = new HostnameVerifier() {
+                @Override
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            };
+            try {
+                SSLContext sc = SSLContext.getInstance("TLS");
+                sc.init(null, byPassTrustManagers, new SecureRandom());
+                HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+                HttpsURLConnection.setDefaultHostnameVerifier(v);
+                builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sc, v));
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            } catch (KeyManagementException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        httpclient = builder.build();
     }
 
     public void setProxy(String host, int port, String scheme) {
