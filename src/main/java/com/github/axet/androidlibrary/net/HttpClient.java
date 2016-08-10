@@ -403,7 +403,11 @@ public class HttpClient {
             }
         }
 
-        httpclient = builder.build();
+        httpclient = create(builder);
+    }
+
+    protected CloseableHttpClient create(HttpClientBuilder builder) {
+        return builder.build();
     }
 
     public void setProxy(String host, int port, String scheme) {
