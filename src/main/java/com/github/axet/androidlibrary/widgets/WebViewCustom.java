@@ -345,13 +345,13 @@ public class WebViewCustom extends WebView {
 
         if (base == null) {
             base = url;
-            HttpClient.DownloadResponse w = http.getResponse(base, url);
-            w.downloadText();
-            if (w.getError() == null && w.isHtml()) {
-                w.setHtml(loadBase(w.getHtml()));
-                this.html = w.getHtml();
+            HttpClient.DownloadResponse r = http.getResponse(base, url);
+            r.downloadText();
+            if (r.getError() == null && r.isHtml()) {
+                r.setHtml(loadBase(r.getHtml()));
+                this.html = r.getHtml();
             }
-            return w;
+            return r;
         } else {
             return get(url);
         }
@@ -412,29 +412,39 @@ public class WebViewCustom extends WebView {
     public void postUrl(String url, Map<String, String> postData) {
         if (http != null) {
             base = url;
-            load(url, post(url, postData));
+
+            String hist = url;
+
+            HttpClient.DownloadResponse r = post(url, postData);
+            if (r.getError() != null) {
+                // we need update url to make WebView reset previous page zoom. all calls come from/to WebView and it knows it is new url.
+                // so getBase() works fine. only postUrl() sholud do the trick.
+                url = "about:error";
+                // keep history url points to original url, so WebView.reload() keep working properly
+            }
+
+            load(url, hist, r);
         } else
             super.postUrl(url, HttpClient.encode(postData).getBytes(Charset.defaultCharset()));
     }
 
     // Network on main Thread
     public void load(String url, final HttpClient.DownloadResponse r) {
+        load(url, url, r);
+    }
+
+    public void load(String url, String hist, final HttpClient.DownloadResponse r) {
         if (!r.downloaded) {
             listener.onDownloadStart(url, r.userAgent, r.contentDisposition, r.getMimeType(), r.contentLength);
             return;
         }
         try {
             String html = IOUtils.toString(r.getData(), r.getEncoding());
-            String hist = url;
-            if (r.getError() == null && r.isHtml()) {
-                html = loadBase(html);
-                // no error, we have to get last redirected url
-                url = r.getUrl();
+            if (r.getError() == null) {
+                url = r.getUrl(); // no error, we have to get last redirected url
                 hist = url;
-            } else {
-                // we need update url to make WebView reset previous page zoom
-                url = "about:error";
-                // keep history url points to original url, so WebView.reload() keep working properly
+                if (r.isHtml())
+                    html = loadBase(html);
             }
 
             base = url;
@@ -529,9 +539,9 @@ public class WebViewCustom extends WebView {
         updateCookies(url);
 
         try {
-            HttpClient.DownloadResponse w = http.getResponse(base, url);
-            w.downloadText();
-            return w;
+            HttpClient.DownloadResponse r = http.getResponse(base, url);
+            r.downloadText();
+            return r;
         } catch (final RuntimeException e) {
             logIO(url, e);
             handler.post(new Runnable() {
@@ -551,9 +561,9 @@ public class WebViewCustom extends WebView {
 
     public HttpClient.DownloadResponse post(String url, Map<String, String> postData) {
         updateCookies(url);
-        HttpClient.DownloadResponse w = http.postResponse(base, url, postData);
-        w.downloadText();
-        return w;
+        HttpClient.DownloadResponse r = http.postResponse(base, url, postData);
+        r.downloadText();
+        return r;
     }
 
     public void onProgressChanged(WebView view, int newProgress) {
@@ -570,9 +580,9 @@ public class WebViewCustom extends WebView {
         if (url == null || url.isEmpty()) { // null? then it is js_post call
             js = js_post;
         } else {
-            HttpClient.DownloadResponse w = getInject(url);
-            if (w != null) {
-                js = w.getHtml();
+            HttpClient.DownloadResponse r = getInject(url);
+            if (r != null) {
+                js = r.getHtml();
             }
         }
         if (js == null) // no known script error
@@ -625,9 +635,9 @@ public class WebViewCustom extends WebView {
     }
 
     public HttpClient.DownloadResponse shouldInterceptRequest(WebView view, String url) {
-        HttpClient.DownloadResponse w = getInject(url);
-        if (w != null)
-            return w;
+        HttpClient.DownloadResponse r = getInject(url);
+        if (r != null)
+            return r;
         if (http != null)
             return getBase(url);
         return null;
