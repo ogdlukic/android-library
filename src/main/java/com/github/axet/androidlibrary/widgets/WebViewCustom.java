@@ -439,10 +439,11 @@ public class WebViewCustom extends WebView {
             return;
         }
         try {
+            url = r.getUrl(); // error or not, we need to keep javascript working
+
             String html = IOUtils.toString(r.getData(), r.getEncoding());
             if (r.getError() == null) {
-                url = r.getUrl(); // no error, we have to get last redirected url
-                hist = url;
+                hist = url; // no error, we have to get last redirected url
                 if (r.isHtml())
                     html = loadBase(html);
             }
