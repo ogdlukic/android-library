@@ -364,16 +364,12 @@ public class HttpClient {
     }
 
     public void create() {
-        RequestConfig.Builder requestBuilder = RequestConfig.custom();
-        requestBuilder.setConnectTimeout(CONNECTION_TIMEOUT);
-        requestBuilder.setConnectionRequestTimeout(CONNECTION_TIMEOUT);
-
         if (credsProvider == null)
             credsProvider = new BasicCredentialsProvider();
 
         HttpClientBuilder builder = HttpClientBuilder.create();
         builder.setUserAgent(USER_AGENT);
-        builder.setDefaultRequestConfig(requestBuilder.build());
+        builder.setDefaultRequestConfig(build((RequestConfig) null));
         builder.setRedirectStrategy(new LaxRedirectStrategy());
         builder.setDefaultCredentialsProvider(credsProvider);
         builder.setRequestExecutor(new HttpRequestExecutor() {
@@ -416,11 +412,28 @@ public class HttpClient {
             }
         }
 
-        httpclient = create(builder);
+        httpclient = build(builder);
     }
 
-    protected CloseableHttpClient create(HttpClientBuilder builder) {
+    protected CloseableHttpClient build(HttpClientBuilder builder) {
         return builder.build();
+    }
+
+    public RequestConfig build(RequestConfig config) {
+        RequestConfig.Builder builder;
+        if (config == null) {
+            builder = RequestConfig.custom();
+        } else {
+            builder = RequestConfig.copy(config);
+        }
+        return build(builder);
+    }
+
+    public RequestConfig build(RequestConfig.Builder builder) {
+        builder.setConnectTimeout(CONNECTION_TIMEOUT);
+        builder.setConnectionRequestTimeout(CONNECTION_TIMEOUT);
+        builder.setProxy(proxy);
+        return builder.setProxy(proxy).build();
     }
 
     public void setProxy(String host, int port, String scheme) {
@@ -554,17 +567,7 @@ public class HttpClient {
         this.request = request;
 
         if (proxy != null) {
-            RequestConfig config = request.getConfig();
-            RequestConfig.Builder builder;
-            if (config == null) {
-                builder = RequestConfig.custom();
-                builder.setConnectTimeout(CONNECTION_TIMEOUT);
-                builder.setConnectionRequestTimeout(CONNECTION_TIMEOUT);
-            } else {
-                builder = RequestConfig.copy(config);
-            }
-            config = builder.setProxy(proxy).build();
-            request.setConfig(config);
+            request.setConfig(build(request.getConfig()));
         }
 
         if (base != null) {
