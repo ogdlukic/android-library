@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.net.UrlQuerySanitizer;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
@@ -44,6 +45,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -106,7 +108,7 @@ public class WebViewCustom extends WebView {
 
     public class Interceptor {
         @JavascriptInterface
-        public void customSubmit(String method, String action, String form) {
+        public void customSubmit(String method, String action, String enctype, String form) { // TODO support enctype
             Log.d(TAG, "customSubmit()");
             if (method.toUpperCase().equals("POST")) {
                 String url = null;
@@ -128,11 +130,21 @@ public class WebViewCustom extends WebView {
                 }
                 return;
             }
-            // TODO GET
+            if (method.toUpperCase().equals("GET")) { // even possible? just ignore 'form' then
+                String url = null;
+                try {
+                    url = new URL(new URL(base), action).toString();
+                    loadUrl(url);
+                } catch (Exception e) {
+                    logIO(url, e);
+                    onConsoleMessage(e.getMessage(), 0, "");
+                }
+                return;
+            }
         }
 
         @JavascriptInterface
-        public String customAjax(String method, String action, String user, String password, String body) {
+        public String customAjax(String method, String action, String user, String password, String enctype, String form) { // TODO support enctype
             Log.d(TAG, "customAjax()");
             if (method.toUpperCase().equals("GET")) {
                 String url = null;
@@ -142,10 +154,18 @@ public class WebViewCustom extends WebView {
                     return r.getHtml();
                 } catch (Exception e) {
                     logIO(url, e);
-                    onConsoleMessage(e.getMessage(), 0, "");
                 }
             }
-            // TODO POST
+            if (method.toUpperCase().equals("POST")) {
+                String url = null;
+                try {
+                    url = new URL(new URL(base), action).toString();
+                    HttpClient.DownloadResponse r = post(url, form.getBytes(Charset.defaultCharset()));
+                    return r.getHtml();
+                } catch (Exception e) {
+                    logIO(url, e);
+                }
+            }
             return "";
         }
     }
@@ -556,8 +576,15 @@ public class WebViewCustom extends WebView {
     }
 
     public HttpClient.DownloadResponse post(String url, byte[] postData) {
-        // TODO postData -> array
-        return post(url, (Map<String, String>) null);
+        Map<String, String> map = new HashMap<>();
+        String data = new String(postData, Charset.defaultCharset());
+        UrlQuerySanitizer sanitizer = new UrlQuerySanitizer("?" + data);
+        List<UrlQuerySanitizer.ParameterValuePair> list = sanitizer.getParameterList();
+        for (int i = 0; i < list.size(); i++) {
+            UrlQuerySanitizer.ParameterValuePair p = list.get(i);
+            map.put(p.mParameter, p.mValue);
+        }
+        return post(url, map);
     }
 
     public HttpClient.DownloadResponse post(String url, Map<String, String> postData) {

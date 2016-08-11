@@ -2,6 +2,8 @@ package com.github.axet.androidlibrary.net;
 
 import android.net.Uri;
 import android.os.Build;
+import android.text.Html;
+import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.WebResourceResponse;
 
@@ -177,7 +179,13 @@ public class HttpClient {
 
         public static InputStream getStream(String str) {
             try {
-                return new ByteArrayInputStream(str.getBytes(UTF8));
+                String html = "<html>";
+                html += "<meta name=\"viewport\" content=\"initial-scale=1.0,user-scalable=no,maximum-scale=1,width=device-width\">";
+                html += "<body>";
+                html += TextUtils.htmlEncode(str);
+                html += "</body></html>";
+
+                return new ByteArrayInputStream(html.getBytes(Charset.defaultCharset().name()));
             } catch (IOException ee) {
                 Log.e(TAG, "HttpError", ee);
                 return null;
@@ -193,6 +201,21 @@ public class HttpClient {
             if (msg != null)
                 return msg;
             return e.getMessage();
+        }
+
+        @Override
+        public void downloadText() {
+            // ignore
+        }
+
+        @Override
+        public void download() {
+            // ignore
+        }
+
+        @Override
+        public void attachment() {
+            // ignore
         }
 
         @Override
@@ -623,7 +646,7 @@ public class HttpClient {
             CloseableHttpResponse response = execute(base, httpGet);
             return new DownloadResponse(httpClientContext, httpGet, response);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            return new HttpError(e);
         } finally {
             request = null;
         }
@@ -662,7 +685,7 @@ public class HttpClient {
             CloseableHttpResponse response = execute(base, httpPost);
             return new DownloadResponse(httpClientContext, httpPost, response);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            return new HttpError(e);
         } finally {
             request = null;
         }

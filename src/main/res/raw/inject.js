@@ -19,6 +19,8 @@ function interceptor(e) {
                     : form.attributes['method'].nodeValue,
             form.attributes['action'] === undefined ? null
                     : form.attributes['action'].nodeValue,
+            form.attributes['enctype'] === undefined ? null
+                    : form.attributes['enctype'].nodeValue,
             JSON.stringify({"form" : aa}));
 }
 
@@ -27,9 +29,9 @@ var XMLHttpRequest = function () {
     this.open = function(method, url, async, user, password) {
         this.params = {"method" : method, "url" : url, "async" : async, "user" : user, "password" : password};
     }
-    this.send = function(body) {
+    this.send = function(form) {
         var params = this.params
-        this.response = interception.customAjax(params.method, params.url, params.user, params.password, body);
+        this.response = interception.customAjax(params.method, params.url, params.user, params.password, this.header['Content-Type'], form);
         this.responseText = this.response
         this.responseURL = params.url
         this.responseXML = this.response
@@ -37,5 +39,9 @@ var XMLHttpRequest = function () {
         this.status = 200;
         this.statusText = "OK";
         this.onreadystatechange();
+    }
+    this.header = {};
+    this.setRequestHeader = function(name, value) {
+        this.header[name] = value;
     }
 }
