@@ -37,7 +37,7 @@ import java.util.ArrayList;
  * https://android.googlesource.com/platform/packages/apps/Gallery2/+/idea133/src/com/android/photos/views/HeaderGridView.java
  * <p/>
  * A {@link GridView} that supports adding header rows in a
- * very similar way to {@link ListView}.
+ * very similar way to {@link android.widget.ListView}.
  * See {@link HeaderGridView#addHeaderView(View, Object, boolean)}
  */
 public class HeaderGridView extends GridView {
