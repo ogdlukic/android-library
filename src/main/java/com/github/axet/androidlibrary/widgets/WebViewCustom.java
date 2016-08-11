@@ -477,7 +477,7 @@ public class WebViewCustom extends WebView {
     @Override
     public void loadDataWithBaseURL(String baseUrl, String data, String mimeType, String encoding, String historyUrl) {
         // all inner calles already set url
-        if (base != baseUrl) { // external call
+        if (base == null || !base.equals(baseUrl)) { // external call
             if (http != null) { // make updateCookies() mecanics work
                 removeWebCookies();
             }
