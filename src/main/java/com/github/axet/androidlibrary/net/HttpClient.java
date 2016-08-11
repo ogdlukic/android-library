@@ -43,8 +43,12 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.HttpClientConnection;
 import cz.msebera.android.httpclient.HttpEntity;
+import cz.msebera.android.httpclient.HttpException;
 import cz.msebera.android.httpclient.HttpHost;
+import cz.msebera.android.httpclient.HttpRequest;
+import cz.msebera.android.httpclient.HttpResponse;
 import cz.msebera.android.httpclient.NameValuePair;
 import cz.msebera.android.httpclient.ParseException;
 import cz.msebera.android.httpclient.StatusLine;
@@ -72,7 +76,9 @@ import cz.msebera.android.httpclient.impl.client.HttpClientBuilder;
 import cz.msebera.android.httpclient.impl.client.LaxRedirectStrategy;
 import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 import cz.msebera.android.httpclient.message.BasicNameValuePair;
+import cz.msebera.android.httpclient.protocol.HttpContext;
 import cz.msebera.android.httpclient.protocol.HttpCoreContext;
+import cz.msebera.android.httpclient.protocol.HttpRequestExecutor;
 import cz.msebera.android.httpclient.util.EntityUtils;
 
 // cz.msebera.android.httpclient recommended by apache
@@ -90,7 +96,7 @@ public class HttpClient {
     protected CloseableHttpClient httpclient;
     protected HttpClientContext httpClientContext = HttpClientContext.create();
     protected AbstractExecutionAwareRequest request;
-    protected RequestConfig config;
+    protected HttpHost proxy;
     protected CredentialsProvider credsProvider;
 
     public static HttpCookie from(Cookie c) {
@@ -366,9 +372,16 @@ public class HttpClient {
             credsProvider = new BasicCredentialsProvider();
 
         HttpClientBuilder builder = HttpClientBuilder.create();
+        builder.setUserAgent(USER_AGENT);
         builder.setDefaultRequestConfig(requestBuilder.build());
         builder.setRedirectStrategy(new LaxRedirectStrategy());
         builder.setDefaultCredentialsProvider(credsProvider);
+        builder.setRequestExecutor(new HttpRequestExecutor() {
+            @Override
+            public HttpResponse execute(HttpRequest request, HttpClientConnection conn, HttpContext context) throws IOException, HttpException {
+                return super.execute(request, conn, context);
+            }
+        });
 
         // javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0xb89bbee8: Failure in SSL library, usually a protocol error
         // error:14077438:SSL routines:SSL23_GET_SERVER_HELLO:tlsv1 alert internal error (external/openssl/ssl/s23_clnt.c:741 0xaf144a4d:0x00000000)
@@ -411,8 +424,7 @@ public class HttpClient {
     }
 
     public void setProxy(String host, int port, String scheme) {
-        HttpHost proxy = new HttpHost(host, port, scheme);
-        config = RequestConfig.custom().setProxy(proxy).build();
+        proxy = new HttpHost(host, port, scheme);
     }
 
     public void setProxy(String host, int port, String scheme, String login, String pass) {
@@ -421,11 +433,7 @@ public class HttpClient {
     }
 
     public void clearProxy() {
-        config = null;
-    }
-
-    public RequestConfig getConfig() {
-        return config;
+        proxy = null;
     }
 
     public void addCookies(String url, String cookies) {
@@ -545,15 +553,22 @@ public class HttpClient {
     public CloseableHttpResponse execute(String base, HttpRequestBase request) throws IOException {
         this.request = request;
 
-        if (config != null)
+        if (proxy != null) {
+            RequestConfig config = request.getConfig();
+            RequestConfig.Builder builder;
+            if (config == null)
+                builder = RequestConfig.custom();
+            else
+                builder = RequestConfig.copy(config);
+            config = builder.setProxy(proxy).build();
             request.setConfig(config);
+        }
 
         if (base != null) {
             if (!base.equals(request.getURI().toString()))
                 request.addHeader("Referer", base);
             Uri u = Uri.parse(base);
             request.addHeader("Origin", new Uri.Builder().scheme(u.getScheme()).authority(u.getAuthority()).toString());
-            request.addHeader("User-Agent", USER_AGENT);
         }
 
         return execute(request);
