@@ -556,10 +556,13 @@ public class HttpClient {
         if (proxy != null) {
             RequestConfig config = request.getConfig();
             RequestConfig.Builder builder;
-            if (config == null)
+            if (config == null) {
                 builder = RequestConfig.custom();
-            else
+                builder.setConnectTimeout(CONNECTION_TIMEOUT);
+                builder.setConnectionRequestTimeout(CONNECTION_TIMEOUT);
+            } else {
                 builder = RequestConfig.copy(config);
+            }
             config = builder.setProxy(proxy).build();
             request.setConfig(config);
         }
