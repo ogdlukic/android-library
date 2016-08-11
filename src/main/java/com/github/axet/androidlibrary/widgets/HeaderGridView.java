@@ -35,7 +35,7 @@ import java.util.ArrayList;
 
 /**
  * https://android.googlesource.com/platform/packages/apps/Gallery2/+/idea133/src/com/android/photos/views/HeaderGridView.java
- * <p>
+ * <p/>
  * A {@link GridView} that supports adding header rows in a
  * very similar way to {@link android.widget.ListView}.
  * See {@link HeaderGridView#addHeaderView(View, Object, boolean)}
@@ -108,7 +108,7 @@ public class HeaderGridView extends GridView {
      * Add a fixed view to appear at the top of the grid. If addHeaderView is
      * called more than once, the views will appear in the order they were
      * added. Views added using this call can take focus if they want.
-     * <p>
+     * <p/>
      * NOTE: Call this before calling setAdapter. This is so HeaderGridView can wrap
      * the supplied cursor with one that will also account for header views.
      *
@@ -160,7 +160,7 @@ public class HeaderGridView extends GridView {
      * Add a fixed view to appear at the top of the grid. If addHeaderView is
      * called more than once, the views will appear in the order they were
      * added. Views added using this call can take focus if they want.
-     * <p>
+     * <p/>
      * NOTE: Call this before calling setAdapter. This is so HeaderGridView can wrap
      * the supplied cursor with one that will also account for header views.
      *
@@ -403,9 +403,10 @@ public class HeaderGridView extends GridView {
                 }
             }
             int footerStart = numHeadersAndPlaceholders + adapterCount;
+            final int adjPositionFooter = position - footerStart;
             int numFootersAndPlaceholders = getFooterCount() * mNumColumns;
-            if (position >= footerStart && position < numFootersAndPlaceholders) {
-                return (position % mNumColumns == 0) && mHeaderViewInfos.get(position / mNumColumns).isSelectable;
+            if (adjPositionFooter >= 0 && adjPositionFooter < numFootersAndPlaceholders) {
+                return (adjPositionFooter % mNumColumns == 0) && mFooterViewInfos.get(adjPositionFooter / mNumColumns).isSelectable;
             }
             throw new ArrayIndexOutOfBoundsException(position);
         }
@@ -427,6 +428,14 @@ public class HeaderGridView extends GridView {
                 adapterCount = mAdapter.getCount();
                 if (adjPosition < adapterCount) {
                     return mAdapter.getItem(adjPosition);
+                }
+            }
+            int footerStart = numHeadersAndPlaceholders + adapterCount;
+            final int adjPositionFooter = position - footerStart;
+            int numFootersAndPlaceholders = getFooterCount() * mNumColumns;
+            if (adjPositionFooter >= 0 && adjPositionFooter < numFootersAndPlaceholders) {
+                if (adjPositionFooter % mNumColumns == 0) {
+                    return mFooterViewInfos.get(position / mNumColumns).data;
                 }
             }
             throw new ArrayIndexOutOfBoundsException(position);
