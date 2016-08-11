@@ -10,7 +10,7 @@ import android.view.animation.Transformation;
 import android.widget.ListView;
 
 public class RemoveItemAnimation extends Animation {
-    ListView list;
+    ViewGroup list;
     View convertView;
     Runnable run;
     int h;
@@ -29,7 +29,7 @@ public class RemoveItemAnimation extends Animation {
 
     Handler handler;
 
-    public static void apply(final ListView list, final View v, final Runnable run) {
+    public static void apply(final ViewGroup list, final View v, final Runnable run) {
         v.startAnimation(new RemoveItemAnimation(list, v, run));
     }
 
@@ -44,7 +44,7 @@ public class RemoveItemAnimation extends Animation {
         v.setVisibility(View.VISIBLE);
     }
 
-    public RemoveItemAnimation(ListView list, View v, Runnable run) {
+    public RemoveItemAnimation(ViewGroup list, View v, Runnable run) {
         this.convertView = v;
         this.list = list;
         this.run = run;
