@@ -580,7 +580,7 @@ public class HttpClient {
         request = null;
     }
 
-    public CloseableHttpResponse execute(String base, HttpRequestBase request) throws IOException {
+    public CloseableHttpResponse execute(String base, HttpRequestBase request) {
         this.request = request;
 
         if (proxy != null) {
@@ -597,13 +597,19 @@ public class HttpClient {
         return execute(request);
     }
 
-    public CloseableHttpResponse execute(HttpRequestBase request) throws IOException {
-        return httpclient.execute(request, httpClientContext);
+    public CloseableHttpResponse execute(HttpRequestBase request) {
+        try {
+            return httpclient.execute(request, httpClientContext);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String get(String base, String url) {
         try {
-            DownloadResponse w = getResponse(base, url);
+            HttpGet httpGet = new HttpGet(safe(url));
+            CloseableHttpResponse response = execute(base, httpGet);
+            DownloadResponse w = new DownloadResponse(httpClientContext, httpGet, response);
             w.download();
             return w.getHtml();
         } finally {
@@ -613,7 +619,9 @@ public class HttpClient {
 
     public byte[] getBytes(String base, String url) {
         try {
-            DownloadResponse w = getResponse(base, url);
+            HttpGet httpGet = new HttpGet(safe(url));
+            CloseableHttpResponse response = execute(base, httpGet);
+            DownloadResponse w = new DownloadResponse(httpClientContext, httpGet, response);
             w.download();
             return w.getBuf();
         } finally {
@@ -639,7 +647,7 @@ public class HttpClient {
             HttpGet httpGet = new HttpGet(safe(url));
             CloseableHttpResponse response = execute(base, httpGet);
             return new DownloadResponse(httpClientContext, httpGet, response);
-        } catch (IOException e) {
+        } catch (RuntimeException e) {
             return new HttpError(e);
         } finally {
             request = null;
@@ -660,9 +668,14 @@ public class HttpClient {
 
     public String post(String base, String url, List<NameValuePair> nvps) {
         try {
-            DownloadResponse w = postResponse(base, url, nvps);
+            HttpPost httpPost = new HttpPost(safe(url));
+            httpPost.setEntity(new UrlEncodedFormEntity(nvps));
+            CloseableHttpResponse response = execute(base, httpPost);
+            DownloadResponse w = new DownloadResponse(httpClientContext, httpPost, response);
             w.download();
             return w.getHtml();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         } finally {
             request = null;
         }
@@ -678,6 +691,8 @@ public class HttpClient {
             httpPost.setEntity(new UrlEncodedFormEntity(nvps));
             CloseableHttpResponse response = execute(base, httpPost);
             return new DownloadResponse(httpClientContext, httpPost, response);
+        } catch (RuntimeException e) {
+            return new HttpError(e);
         } catch (IOException e) {
             return new HttpError(e);
         } finally {
