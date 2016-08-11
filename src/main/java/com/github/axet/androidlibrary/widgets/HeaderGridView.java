@@ -35,7 +35,7 @@ import java.util.ArrayList;
 
 /**
  * https://android.googlesource.com/platform/packages/apps/Gallery2/+/idea133/src/com/android/photos/views/HeaderGridView.java
- * <p/>
+ * <p>
  * A {@link GridView} that supports adding header rows in a
  * very similar way to {@link android.widget.ListView}.
  * See {@link HeaderGridView#addHeaderView(View, Object, boolean)}
@@ -108,7 +108,7 @@ public class HeaderGridView extends GridView {
      * Add a fixed view to appear at the top of the grid. If addHeaderView is
      * called more than once, the views will appear in the order they were
      * added. Views added using this call can take focus if they want.
-     * <p/>
+     * <p>
      * NOTE: Call this before calling setAdapter. This is so HeaderGridView can wrap
      * the supplied cursor with one that will also account for header views.
      *
@@ -160,7 +160,7 @@ public class HeaderGridView extends GridView {
      * Add a fixed view to appear at the top of the grid. If addHeaderView is
      * called more than once, the views will appear in the order they were
      * added. Views added using this call can take focus if they want.
-     * <p/>
+     * <p>
      * NOTE: Call this before calling setAdapter. This is so HeaderGridView can wrap
      * the supplied cursor with one that will also account for header views.
      *
