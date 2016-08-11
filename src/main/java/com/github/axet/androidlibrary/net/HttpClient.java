@@ -2,7 +2,6 @@ package com.github.axet.androidlibrary.net;
 
 import android.net.Uri;
 import android.os.Build;
-import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.WebResourceResponse;
@@ -150,56 +149,51 @@ public class HttpClient {
     public static class HttpError extends HttpClient.DownloadResponse {
         static final String UTF8 = "UTF8";
         Throwable e;
-        String msg;
 
         public HttpError(Throwable e) {
             super("text/plain", UTF8, (InputStream) null);
             this.e = e;
+
             while (e.getCause() != null)
                 e = e.getCause();
+
             if (e instanceof ConnectTimeoutException) {
                 ConnectTimeoutException t = (ConnectTimeoutException) e;
-                setMessage("Connection Timeout: " + t.getMessage());
+                setHtml("Connection Timeout: " + t.getMessage());
                 return;
             }
+
             if (e instanceof SocketTimeoutException) {
                 SocketTimeoutException t = (SocketTimeoutException) e;
-                setMessage("Connection Timeout: " + t.getMessage());
+                setHtml("Connection Timeout: " + t.getMessage());
                 return;
             }
-            setData(getStream(e));
+            setHtml(e);
         }
 
-        public static InputStream getStream(Throwable e) {
+        public void setHtml(Throwable e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            return getStream(sw.toString());
+            setHtml(sw.toString());
         }
 
-        public static InputStream getStream(String str) {
+        public void setHtml(String str) {
             try {
                 String html = "<html>";
                 html += "<meta name=\"viewport\" content=\"initial-scale=1.0,user-scalable=no,maximum-scale=1,width=device-width\">";
                 html += "<body>";
                 html += TextUtils.htmlEncode(str);
                 html += "</body></html>";
-
-                return new ByteArrayInputStream(html.getBytes(Charset.defaultCharset().name()));
+                buf = html.getBytes(Charset.defaultCharset().name());
+                setData(new ByteArrayInputStream(buf));
             } catch (IOException ee) {
                 Log.e(TAG, "HttpError", ee);
-                return null;
             }
         }
 
-        public void setMessage(String msg) {
-            this.msg = msg;
-            setData(getStream(msg));
-        }
-
+        @Override
         public String getError() {
-            if (msg != null)
-                return msg;
             return e.getMessage();
         }
 
@@ -220,7 +214,7 @@ public class HttpClient {
 
         @Override
         public boolean isHtml() {
-            return false;
+            return true;
         }
     }
 
