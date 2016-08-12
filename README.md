@@ -39,7 +39,7 @@ Support Apache HttpClient, Proxying...
 ## gradle
 
 ```gradle
-    compile 'com.github.axet:android-library:1.2.12'
+    compile 'com.github.axet:android-library:1.3.5'
 ```
 
 ## maven
@@ -48,7 +48,7 @@ Support Apache HttpClient, Proxying...
 <dependency>
   <groupId>com.github.axet</groupId>
   <artifactId>android-library</artifactId>
-  <version>1.2.12</version>
+  <version>1.3.5</version>
   <type>aar</type>
 </dependency>
 ```
