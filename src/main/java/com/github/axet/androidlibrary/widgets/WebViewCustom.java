@@ -59,6 +59,7 @@ public class WebViewCustom extends WebView {
     public static final String TAG = WebViewCustom.class.getSimpleName();
 
     public static final String INJECTS_URL = "inject://";
+    public static final String ABOUT_ERROR = "about:error";
 
     String js;
     String js_post;
@@ -352,6 +353,16 @@ public class WebViewCustom extends WebView {
         }
     }
 
+    HttpClient.DownloadResponse getResponse(String base, String url) {
+        try {
+            HttpClient.DownloadResponse r = http.getResponse(base, url);
+            r.downloadText();
+            return r;
+        } catch (RuntimeException e) {
+            return new HttpClient.HttpError(e);
+        }
+    }
+
     // get base html page
     HttpClient.DownloadResponse getBase(String url) {
         if (url.startsWith("data")) {
@@ -365,8 +376,7 @@ public class WebViewCustom extends WebView {
 
         if (base == null) {
             base = url;
-            HttpClient.DownloadResponse r = http.getResponse(base, url);
-            r.downloadText();
+            HttpClient.DownloadResponse r = getResponse(base, url);
             if (r.getError() == null && r.isHtml()) {
                 r.setHtml(loadBase(r.getHtml()));
                 this.html = r.getHtml();
@@ -439,7 +449,7 @@ public class WebViewCustom extends WebView {
             if (r.getError() != null) {
                 // we need update url to make WebView reset previous page zoom. all calls come from/to WebView and it knows it is new url.
                 // so getBase() works fine. only postUrl() sholud do the trick.
-                url = "about:error";
+                url = ABOUT_ERROR;
                 // keep history url points to original url, so WebView.reload() keep working properly
             }
 
@@ -560,8 +570,7 @@ public class WebViewCustom extends WebView {
         updateCookies(url);
 
         try {
-            HttpClient.DownloadResponse r = http.getResponse(base, url);
-            r.downloadText();
+            HttpClient.DownloadResponse r = getResponse(base, url);
             return r;
         } catch (final RuntimeException e) {
             logIO(url, e);
@@ -589,9 +598,13 @@ public class WebViewCustom extends WebView {
 
     public HttpClient.DownloadResponse post(String url, Map<String, String> postData) {
         updateCookies(url);
-        HttpClient.DownloadResponse r = http.postResponse(base, url, postData);
-        r.downloadText();
-        return r;
+        try {
+            HttpClient.DownloadResponse r = http.postResponse(base, url, postData);
+            r.downloadText();
+            return r;
+        } catch (RuntimeException e) {
+            return new HttpClient.HttpError(e);
+        }
     }
 
     public void onProgressChanged(WebView view, int newProgress) {

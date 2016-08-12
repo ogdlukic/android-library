@@ -607,9 +607,7 @@ public class HttpClient {
 
     public String get(String base, String url) {
         try {
-            HttpGet httpGet = new HttpGet(safe(url));
-            CloseableHttpResponse response = execute(base, httpGet);
-            DownloadResponse w = new DownloadResponse(httpClientContext, httpGet, response);
+            DownloadResponse w = getResponse(base, url);
             w.download();
             return w.getHtml();
         } finally {
@@ -619,9 +617,7 @@ public class HttpClient {
 
     public byte[] getBytes(String base, String url) {
         try {
-            HttpGet httpGet = new HttpGet(safe(url));
-            CloseableHttpResponse response = execute(base, httpGet);
-            DownloadResponse w = new DownloadResponse(httpClientContext, httpGet, response);
+            DownloadResponse w = getResponse(base, url);
             w.download();
             return w.getBuf();
         } finally {
@@ -648,7 +644,7 @@ public class HttpClient {
             CloseableHttpResponse response = execute(base, httpGet);
             return new DownloadResponse(httpClientContext, httpGet, response);
         } catch (RuntimeException e) {
-            return new HttpError(e);
+            throw new RuntimeException(e);
         } finally {
             request = null;
         }
@@ -668,14 +664,9 @@ public class HttpClient {
 
     public String post(String base, String url, List<NameValuePair> nvps) {
         try {
-            HttpPost httpPost = new HttpPost(safe(url));
-            httpPost.setEntity(new UrlEncodedFormEntity(nvps));
-            CloseableHttpResponse response = execute(base, httpPost);
-            DownloadResponse w = new DownloadResponse(httpClientContext, httpPost, response);
+            DownloadResponse w = postResponse(base, url, nvps);
             w.download();
             return w.getHtml();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         } finally {
             request = null;
         }
@@ -692,9 +683,9 @@ public class HttpClient {
             CloseableHttpResponse response = execute(base, httpPost);
             return new DownloadResponse(httpClientContext, httpPost, response);
         } catch (RuntimeException e) {
-            return new HttpError(e);
+            throw e;
         } catch (IOException e) {
-            return new HttpError(e);
+            throw new RuntimeException(e);
         } finally {
             request = null;
         }
