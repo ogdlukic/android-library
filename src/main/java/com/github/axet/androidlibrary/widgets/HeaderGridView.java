@@ -35,21 +35,23 @@ import java.util.ArrayList;
 
 /**
  * https://android.googlesource.com/platform/packages/apps/Gallery2/+/idea133/src/com/android/photos/views/HeaderGridView.java
- * <p>
+ * <p/>
  * A {@link GridView} that supports adding header rows in a
  * very similar way to {@link android.widget.ListView}.
  * See {@link HeaderGridView#addHeaderView(View, Object, boolean)}
  */
 public class HeaderGridView extends GridView {
-    private static final String TAG = "HeaderGridView";
+    public static final String TAG = HeaderGridView.class.getSimpleName();
 
     Paint divider = new Paint();
+    ArrayList<FixedViewInfo> mHeaderViewInfos = new ArrayList<FixedViewInfo>();
+    ArrayList<FixedViewInfo> mFooterViewInfos = new ArrayList<FixedViewInfo>();
 
     /**
      * A class that represents a fixed view in a list, for example a header at the top
      * or a footer at the bottom.
      */
-    private static class FixedViewInfo {
+    public static class FixedViewInfo {
         /**
          * The view to add to the grid
          */
@@ -65,207 +67,7 @@ public class HeaderGridView extends GridView {
         public boolean isSelectable;
     }
 
-    private ArrayList<FixedViewInfo> mHeaderViewInfos = new ArrayList<FixedViewInfo>();
-    private ArrayList<FixedViewInfo> mFooterViewInfos = new ArrayList<FixedViewInfo>();
-
-    private void initHeaderGridView() {
-        super.setClipChildren(false);
-
-        divider.setColor(0xffececec);
-        divider.setStrokeWidth(ThemeUtils.dp2px(getContext(), 2));
-    }
-
-    public HeaderGridView(Context context) {
-        super(context);
-        initHeaderGridView();
-    }
-
-    public HeaderGridView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initHeaderGridView();
-    }
-
-    public HeaderGridView(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        initHeaderGridView();
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        ListAdapter adapter = getAdapter();
-        if (adapter != null && adapter instanceof HeaderViewGridAdapter) {
-            ((HeaderViewGridAdapter) adapter).setNumColumns(getNumColumns());
-        }
-    }
-
-    @Override
-    public void setClipChildren(boolean clipChildren) {
-        // Ignore, since the header rows depend on not being clipped
-    }
-
-    /**
-     * Add a fixed view to appear at the top of the grid. If addHeaderView is
-     * called more than once, the views will appear in the order they were
-     * added. Views added using this call can take focus if they want.
-     * <p>
-     * NOTE: Call this before calling setAdapter. This is so HeaderGridView can wrap
-     * the supplied cursor with one that will also account for header views.
-     *
-     * @param v            The view to add.
-     * @param data         Data to associate with this view
-     * @param isSelectable whether the item is selectable
-     */
-    public void addHeaderView(View v, Object data, boolean isSelectable) {
-        ListAdapter adapter = getAdapter();
-        if (adapter != null && !(adapter instanceof HeaderViewGridAdapter)) {
-            throw new IllegalStateException("Cannot add header view to grid -- setAdapter has already been called.");
-        }
-        FixedViewInfo info = new FixedViewInfo();
-        FrameLayout fl = new FullWidthFixedViewLayout(getContext());
-        fl.addView(v);
-        info.view = v;
-        info.viewContainer = fl;
-        info.data = data;
-        info.isSelectable = isSelectable;
-        mHeaderViewInfos.add(info);
-        // in the case of re-adding a header view, or adding one later on,
-        // we need to notify the observer
-        if (adapter != null) {
-            ((HeaderViewGridAdapter) adapter).notifyDataSetChanged();
-        }
-    }
-
-    public void addFooterView(View v, Object data, boolean isSelectable) {
-        ListAdapter adapter = getAdapter();
-        if (adapter != null && !(adapter instanceof HeaderViewGridAdapter)) {
-            throw new IllegalStateException("Cannot add header view to grid -- setAdapter has already been called.");
-        }
-        FixedViewInfo info = new FixedViewInfo();
-        FrameLayout fl = new FullWidthFixedViewLayout(getContext());
-        fl.addView(v);
-        info.view = v;
-        info.viewContainer = fl;
-        info.data = data;
-        info.isSelectable = isSelectable;
-        mFooterViewInfos.add(info);
-        // in the case of re-adding a header view, or adding one later on,
-        // we need to notify the observer
-        if (adapter != null) {
-            ((HeaderViewGridAdapter) adapter).notifyDataSetChanged();
-        }
-    }
-
-    /**
-     * Add a fixed view to appear at the top of the grid. If addHeaderView is
-     * called more than once, the views will appear in the order they were
-     * added. Views added using this call can take focus if they want.
-     * <p>
-     * NOTE: Call this before calling setAdapter. This is so HeaderGridView can wrap
-     * the supplied cursor with one that will also account for header views.
-     *
-     * @param v The view to add.
-     */
-    public void addHeaderView(View v) {
-        addHeaderView(v, null, true);
-    }
-
-    public void addFooterView(View v) {
-        addFooterView(v, null, true);
-    }
-
-    public int getHeaderViewCount() {
-        return mHeaderViewInfos.size();
-    }
-
-    public boolean removeFooterView(View v) {
-        if (mFooterViewInfos.size() > 0) {
-            boolean result = false;
-            ListAdapter adapter = getAdapter();
-            if (adapter != null && ((HeaderViewGridAdapter) adapter).removeFooter(v)) {
-                result = true;
-            }
-            removeFixedViewInfo(v, mFooterViewInfos);
-            return result;
-        }
-        return false;
-    }
-
-    /**
-     * Removes a previously-added header view.
-     *
-     * @param v The view to remove
-     * @return true if the view was removed, false if the view was not a header
-     * view
-     */
-    public boolean removeHeaderView(View v) {
-        if (mHeaderViewInfos.size() > 0) {
-            boolean result = false;
-            ListAdapter adapter = getAdapter();
-            if (adapter != null && ((HeaderViewGridAdapter) adapter).removeHeader(v)) {
-                result = true;
-            }
-            removeFixedViewInfo(v, mHeaderViewInfos);
-            return result;
-        }
-        return false;
-    }
-
-    private void removeFixedViewInfo(View v, ArrayList<FixedViewInfo> where) {
-        int len = where.size();
-        for (int i = 0; i < len; ++i) {
-            FixedViewInfo info = where.get(i);
-            if (info.view == v) {
-                where.remove(i);
-                break;
-            }
-        }
-    }
-
-    @Override
-    public void setAdapter(ListAdapter adapter) {
-        if (mHeaderViewInfos.size() > 0) {
-            HeaderViewGridAdapter hadapter = new HeaderViewGridAdapter(mHeaderViewInfos, mFooterViewInfos, adapter);
-            int numColumns = getNumColumns();
-            if (numColumns > 1) {
-                hadapter.setNumColumns(numColumns);
-            }
-            super.setAdapter(hadapter);
-        } else {
-            super.setAdapter(adapter);
-        }
-    }
-
-    @Override
-    protected void dispatchDraw(Canvas canvas) {
-        int targetWidth = HeaderGridView.this.getMeasuredWidth() - HeaderGridView.this.getPaddingLeft() - HeaderGridView.this.getPaddingRight();
-
-        int space = getVerticalSpacing();
-        float dividerSize = space / 2;
-
-        final int count = getChildCount();
-        for (int i = 0; i < count; i++) {
-            View child = getChildAt(i);
-            int bottom = child.getBottom();
-            if (child instanceof FullWidthFixedViewLayout) {
-                FullWidthFixedViewLayout m = (FullWidthFixedViewLayout) child;
-                if (m.getChildCount() > 0) {
-                    child = m.getChildAt(0);
-                } else {
-                    continue;
-                }
-            }
-            if (child.getVisibility() != VISIBLE) {
-                continue;
-            }
-            canvas.drawLine(0, bottom + dividerSize, targetWidth, bottom + dividerSize, divider);
-        }
-
-
-        super.dispatchDraw(canvas);
-    }
-
-    private class FullWidthFixedViewLayout extends FrameLayout {
+    public class FullWidthFixedViewLayout extends FrameLayout {
         public FullWidthFixedViewLayout(Context context) {
             super(context);
         }
@@ -371,7 +173,11 @@ public class HeaderGridView extends GridView {
         @Override
         public int getCount() {
             if (mAdapter != null) {
-                return getHeadersCount() * mNumColumns + getFooterCount() * mNumColumns + mAdapter.getCount();
+                int adapterCount = mAdapter.getCount();
+                int rem = adapterCount % mNumColumns;
+                if (rem > 0)
+                    adapterCount += mNumColumns - rem;
+                return getHeadersCount() * mNumColumns + getFooterCount() * mNumColumns + adapterCount;
             } else {
                 return getHeadersCount() * mNumColumns + getFooterCount() * mNumColumns;
             }
@@ -401,9 +207,15 @@ public class HeaderGridView extends GridView {
                 if (adjPosition < adapterCount) {
                     return mAdapter.isEnabled(adjPosition);
                 }
+                int rem = adjPosition % mNumColumns;
+                if (rem > 0) {
+                    adapterCount += mNumColumns - adapterCount % mNumColumns;
+                    if (adjPosition < adapterCount) {
+                        return false;
+                    }
+                }
             }
-            int footerStart = numHeadersAndPlaceholders + adapterCount;
-            final int adjPositionFooter = position - footerStart;
+            final int adjPositionFooter = adjPosition - adapterCount;
             int numFootersAndPlaceholders = getFooterCount() * mNumColumns;
             if (adjPositionFooter >= 0 && adjPositionFooter < numFootersAndPlaceholders) {
                 return (adjPositionFooter % mNumColumns == 0) && mFooterViewInfos.get(adjPositionFooter / mNumColumns).isSelectable;
@@ -429,9 +241,15 @@ public class HeaderGridView extends GridView {
                 if (adjPosition < adapterCount) {
                     return mAdapter.getItem(adjPosition);
                 }
+                int rem = adjPosition % mNumColumns;
+                if (rem > 0) {
+                    adapterCount += mNumColumns - adapterCount % mNumColumns;
+                    if (adjPosition < adapterCount) {
+                        return null;
+                    }
+                }
             }
-            int footerStart = numHeadersAndPlaceholders + adapterCount;
-            final int adjPositionFooter = position - footerStart;
+            final int adjPositionFooter = adjPosition - adapterCount;
             int numFootersAndPlaceholders = getFooterCount() * mNumColumns;
             if (adjPositionFooter >= 0 && adjPositionFooter < numFootersAndPlaceholders) {
                 if (adjPositionFooter % mNumColumns == 0) {
@@ -464,6 +282,8 @@ public class HeaderGridView extends GridView {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView != null)
+                convertView.setVisibility(View.VISIBLE);
             // Header (negative positions will throw an ArrayIndexOutOfBoundsException)
             int numHeadersAndPlaceholders = getHeadersCount() * mNumColumns;
             if (position < numHeadersAndPlaceholders) {
@@ -486,13 +306,26 @@ public class HeaderGridView extends GridView {
             int adapterCount = 0;
             if (mAdapter != null) {
                 adapterCount = mAdapter.getCount();
-                if (adjPosition < adapterCount) {
-                    return mAdapter.getView(adjPosition, convertView, parent);
+                if (adapterCount > 0) {
+                    if (adjPosition < adapterCount) {
+                        return mAdapter.getView(adjPosition, convertView, parent);
+                    }
+                    int last = adapterCount - 1;
+                    int rem = adapterCount % mNumColumns;
+                    if (rem > 0) {
+                        adapterCount += mNumColumns - rem;
+                        if (adjPosition < adapterCount) {
+                            convertView = mAdapter.getView(last, convertView, parent);
+                            // We need to do this because GridView uses the height of the last item
+                            // in a row to determine the height for the entire row.
+                            convertView.setVisibility(View.INVISIBLE);
+                            return convertView;
+                        }
+                    }
                 }
             }
-            int footerStart = numHeadersAndPlaceholders + adapterCount;
+            final int adjPositionFooter = adjPosition - adapterCount;
             int numFootersAndPlaceholders = getFooterCount() * mNumColumns;
-            final int adjPositionFooter = position - footerStart;
             if (adjPositionFooter >= 0 && adjPositionFooter < numFootersAndPlaceholders) {
                 View headerViewContainer = mFooterViewInfos.get(adjPositionFooter / mNumColumns).viewContainer;
                 if (adjPositionFooter % mNumColumns == 0) {
@@ -514,15 +347,19 @@ public class HeaderGridView extends GridView {
         @Override
         public int getItemViewType(int position) {
             int numHeadersAndPlaceholders = getHeadersCount() * mNumColumns;
-            if (position < numHeadersAndPlaceholders && (position % mNumColumns != 0)) {
-                // Placeholders get the last view type number
-                return mAdapter != null ? mAdapter.getViewTypeCount() : 1;
-            }
             if (mAdapter != null && position >= numHeadersAndPlaceholders) {
                 int adjPosition = position - numHeadersAndPlaceholders;
                 int adapterCount = mAdapter.getCount();
                 if (adjPosition < adapterCount) {
                     return mAdapter.getItemViewType(adjPosition);
+                }
+                int last = adapterCount - 1;
+                int rem = adapterCount % mNumColumns;
+                if (rem > 0) {
+                    adapterCount += mNumColumns - rem;
+                    if (adjPosition < adapterCount) {
+                        return mAdapter.getItemViewType(last);
+                    }
                 }
             }
             return AdapterView.ITEM_VIEW_TYPE_HEADER_OR_FOOTER;
@@ -568,5 +405,199 @@ public class HeaderGridView extends GridView {
         public void notifyDataSetChanged() {
             mDataSetObservable.notifyChanged();
         }
+    }
+
+    public HeaderGridView(Context context) {
+        super(context);
+        initHeaderGridView();
+    }
+
+    public HeaderGridView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initHeaderGridView();
+    }
+
+    public HeaderGridView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        initHeaderGridView();
+    }
+
+    private void initHeaderGridView() {
+        super.setClipChildren(false);
+        divider.setColor(0xffececec);
+        divider.setStrokeWidth(ThemeUtils.dp2px(getContext(), 2));
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        ListAdapter adapter = getAdapter();
+        if (adapter != null && adapter instanceof HeaderViewGridAdapter) {
+            ((HeaderViewGridAdapter) adapter).setNumColumns(getNumColumns());
+        }
+    }
+
+    @Override
+    public void setClipChildren(boolean clipChildren) {
+        // Ignore, since the header rows depend on not being clipped
+    }
+
+    /**
+     * Add a fixed view to appear at the top of the grid. If addHeaderView is
+     * called more than once, the views will appear in the order they were
+     * added. Views added using this call can take focus if they want.
+     * <p/>
+     * NOTE: Call this before calling setAdapter. This is so HeaderGridView can wrap
+     * the supplied cursor with one that will also account for header views.
+     *
+     * @param v            The view to add.
+     * @param data         Data to associate with this view
+     * @param isSelectable whether the item is selectable
+     */
+    public void addHeaderView(View v, Object data, boolean isSelectable) {
+        ListAdapter adapter = getAdapter();
+        if (adapter != null && !(adapter instanceof HeaderViewGridAdapter)) {
+            throw new IllegalStateException("Cannot add header view to grid -- setAdapter has already been called.");
+        }
+        FixedViewInfo info = new FixedViewInfo();
+        FrameLayout fl = new FullWidthFixedViewLayout(getContext());
+        fl.addView(v);
+        info.view = v;
+        info.viewContainer = fl;
+        info.data = data;
+        info.isSelectable = isSelectable;
+        mHeaderViewInfos.add(info);
+        // in the case of re-adding a header view, or adding one later on,
+        // we need to notify the observer
+        if (adapter != null) {
+            ((HeaderViewGridAdapter) adapter).notifyDataSetChanged();
+        }
+    }
+
+    public void addFooterView(View v, Object data, boolean isSelectable) {
+        ListAdapter adapter = getAdapter();
+        if (adapter != null && !(adapter instanceof HeaderViewGridAdapter)) {
+            throw new IllegalStateException("Cannot add header view to grid -- setAdapter has already been called.");
+        }
+        FixedViewInfo info = new FixedViewInfo();
+        FrameLayout fl = new FullWidthFixedViewLayout(getContext());
+        fl.addView(v);
+        info.view = v;
+        info.viewContainer = fl;
+        info.data = data;
+        info.isSelectable = isSelectable;
+        mFooterViewInfos.add(info);
+        // in the case of re-adding a header view, or adding one later on,
+        // we need to notify the observer
+        if (adapter != null) {
+            ((HeaderViewGridAdapter) adapter).notifyDataSetChanged();
+        }
+    }
+
+    /**
+     * Add a fixed view to appear at the top of the grid. If addHeaderView is
+     * called more than once, the views will appear in the order they were
+     * added. Views added using this call can take focus if they want.
+     * <p/>
+     * NOTE: Call this before calling setAdapter. This is so HeaderGridView can wrap
+     * the supplied cursor with one that will also account for header views.
+     *
+     * @param v The view to add.
+     */
+    public void addHeaderView(View v) {
+        addHeaderView(v, null, true);
+    }
+
+    public void addFooterView(View v) {
+        addFooterView(v, null, true);
+    }
+
+    public int getHeaderViewCount() {
+        return mHeaderViewInfos.size();
+    }
+
+    public boolean removeFooterView(View v) {
+        if (mFooterViewInfos.size() > 0) {
+            boolean result = false;
+            ListAdapter adapter = getAdapter();
+            if (adapter != null && ((HeaderViewGridAdapter) adapter).removeFooter(v)) {
+                result = true;
+            }
+            removeFixedViewInfo(v, mFooterViewInfos);
+            return result;
+        }
+        return false;
+    }
+
+    /**
+     * Removes a previously-added header view.
+     *
+     * @param v The view to remove
+     * @return true if the view was removed, false if the view was not a header
+     * view
+     */
+    public boolean removeHeaderView(View v) {
+        if (mHeaderViewInfos.size() > 0) {
+            boolean result = false;
+            ListAdapter adapter = getAdapter();
+            if (adapter != null && ((HeaderViewGridAdapter) adapter).removeHeader(v)) {
+                result = true;
+            }
+            removeFixedViewInfo(v, mHeaderViewInfos);
+            return result;
+        }
+        return false;
+    }
+
+    private void removeFixedViewInfo(View v, ArrayList<FixedViewInfo> where) {
+        int len = where.size();
+        for (int i = 0; i < len; ++i) {
+            FixedViewInfo info = where.get(i);
+            if (info.view == v) {
+                where.remove(i);
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void setAdapter(ListAdapter adapter) {
+        if (mHeaderViewInfos.size() > 0) {
+            HeaderViewGridAdapter hadapter = new HeaderViewGridAdapter(mHeaderViewInfos, mFooterViewInfos, adapter);
+            int numColumns = getNumColumns();
+            if (numColumns > 1) {
+                hadapter.setNumColumns(numColumns);
+            }
+            super.setAdapter(hadapter);
+        } else {
+            super.setAdapter(adapter);
+        }
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        int targetWidth = HeaderGridView.this.getMeasuredWidth() - HeaderGridView.this.getPaddingLeft() - HeaderGridView.this.getPaddingRight();
+
+        int space = getVerticalSpacing();
+        float dividerSize = space / 2;
+
+        final int count = getChildCount();
+        for (int i = 0; i < count; i++) {
+            View child = getChildAt(i);
+            int bottom = child.getBottom();
+            if (child instanceof FullWidthFixedViewLayout) {
+                FullWidthFixedViewLayout m = (FullWidthFixedViewLayout) child;
+                if (m.getChildCount() > 0) {
+                    child = m.getChildAt(0);
+                } else {
+                    continue;
+                }
+            }
+            if (child.getVisibility() != VISIBLE) {
+                continue;
+            }
+            canvas.drawLine(0, bottom + dividerSize, targetWidth, bottom + dividerSize, divider);
+        }
+        super.dispatchDraw(canvas);
     }
 }
