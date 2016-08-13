@@ -154,17 +154,16 @@ public class HttpClient {
             super("text/plain", UTF8, (InputStream) null);
             this.e = e;
 
-            while (e.getCause() != null)
-                e = e.getCause();
+            Throwable t = e;
+            while (t.getCause() != null)
+                t = t.getCause();
 
             if (e instanceof ConnectTimeoutException) {
-                ConnectTimeoutException t = (ConnectTimeoutException) e;
                 setHtml("Connection Timeout: " + t.getMessage());
                 return;
             }
 
             if (e instanceof SocketTimeoutException) {
-                SocketTimeoutException t = (SocketTimeoutException) e;
                 setHtml("Connection Timeout: " + t.getMessage());
                 return;
             }
@@ -643,8 +642,6 @@ public class HttpClient {
             HttpGet httpGet = new HttpGet(safe(url));
             CloseableHttpResponse response = execute(base, httpGet);
             return new DownloadResponse(httpClientContext, httpGet, response);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
         } finally {
             request = null;
         }

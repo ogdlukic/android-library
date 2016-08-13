@@ -577,7 +577,10 @@ public class WebViewCustom extends WebView {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    onReceivedError(WebViewCustom.this, e.getMessage(), url);
+                    Throwable t = e;
+                    while (t.getCause() != null)
+                        t = t.getCause();
+                    onReceivedError(WebViewCustom.this, t.getMessage(), url);
                 }
             });
             return new HttpClient.HttpError(e);
