@@ -354,6 +354,8 @@ public class HttpClient {
         }
 
         public String getError() {
+            if (status == null) // manually created response
+                return null;
             if (status.getStatusCode() != 200)
                 return status.getReasonPhrase();
             return null;
