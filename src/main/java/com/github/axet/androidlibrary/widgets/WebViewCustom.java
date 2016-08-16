@@ -295,10 +295,10 @@ public class WebViewCustom extends WebView {
             @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                // post come with not data, ignore at all.
+                // post requets come with not data in 'request', ignore at all.
                 if (request.getMethod().equals("POST"))
                     return null;
-                return super.shouldInterceptRequest(view, request);
+                return WebViewCustom.this.shouldInterceptRequest(view, request.getUrl().toString());
             }
 
             @Override
