@@ -68,7 +68,7 @@ public class WebViewCustom extends WebView {
     Thread thread;
     Handler handler = new Handler();
     HttpClient http;
-    String base;
+    String base; // since we can't call getUrl from Chrome IO Thread keep it here
     DownloadListener listener;
     ArrayList<String> injects = new ArrayList<>();
     String html;
@@ -363,7 +363,17 @@ public class WebViewCustom extends WebView {
         }
     }
 
-    // get base html page
+    public HttpClient.DownloadResponse getBase(String url, String html) {
+        base = url;
+        HttpClient.DownloadResponse r = new HttpClient.DownloadResponse(HttpClient.CONTENTTYPE_HTML, Charset.defaultCharset().name(), html);
+        if (r.getError() == null && r.isHtml()) {
+            r.setHtml(loadBase(r.getHtml()));
+            this.html = r.getHtml();
+        }
+        return r;
+    }
+
+    // if first load url call, get base html page
     HttpClient.DownloadResponse getBase(String url) {
         if (url.startsWith("data")) {
             return null;
@@ -374,7 +384,7 @@ public class WebViewCustom extends WebView {
             removeWebCookies();
         }
 
-        if (base == null) {
+        if (base == null || url.equals(base)) {
             base = url;
             HttpClient.DownloadResponse r = getResponse(base, url);
             if (r.getError() == null && r.isHtml()) {
@@ -412,19 +422,19 @@ public class WebViewCustom extends WebView {
     @Override
     public void goBack() {
         super.goBack();
-        base = null;
+        base = getOriginalUrl();
     }
 
     @Override
     public void goForward() {
         super.goForward();
-        base = null;
+        base = getOriginalUrl();
     }
 
     @Override
     public void reload() {
         super.reload();
-        base = null;
+        base = getOriginalUrl();
     }
 
     @Override
