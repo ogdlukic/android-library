@@ -61,6 +61,7 @@ public class WebViewCustom extends WebView {
     public static final String INJECTS_URL = "inject://";
     public static final String ABOUT_ERROR = "about:error";
 
+    String head;
     String js;
     String js_post;
 
@@ -541,6 +542,8 @@ public class WebViewCustom extends WebView {
         Document doc = Jsoup.parse(data);
         Element head = doc.getElementsByTag("head").first();
         if (head != null) {
+            if (this.head != null)
+                head.prepend(this.head);
             head.prepend(addInject(inject));
         }
         if (js != null) {
@@ -704,6 +707,10 @@ public class WebViewCustom extends WebView {
         if (http != null)
             return getBase(url);
         return null;
+    }
+
+    public void setHead(String head) {
+        this.head = head;
     }
 
     public void setInject(String js) {
