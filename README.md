@@ -34,11 +34,11 @@ WebViewCustom
 
 Support Apache HttpClient, Proxying...
 
+* [UnreadCountDrawable.java](./src/main/java/com/github/axet/androidlibrary/widgets/UnreadCountDrawable.java)
+
 Unread Count Drawable
 
 ![./docs/unread.pnp](./docs/unread.pnp)
-
-* [UnreadCountDrawable. java](./src/main/java/com/github/axet/androidlibrary/widgets/UnreadCountDrawable.java)
 
 # Install
 
