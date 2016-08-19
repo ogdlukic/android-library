@@ -34,6 +34,10 @@ WebViewCustom
 
 Support Apache HttpClient, Proxying...
 
+Unread Count Drawable
+
+![./docs/unread.pnp](./docs/unread.pnp)
+
 # Install
 
 ## gradle
@@ -48,7 +52,7 @@ Support Apache HttpClient, Proxying...
 <dependency>
   <groupId>com.github.axet</groupId>
   <artifactId>android-library</artifactId>
-  <version>1.3.5</version>
+  <version>1.4.4</version>
   <type>aar</type>
 </dependency>
 ```
